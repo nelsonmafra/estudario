@@ -81,7 +81,7 @@ basta trocar as funções `Armazem.ler`/`Armazem.gravar`.
 
 - **Matérias do 4º ano (3º bimestre) já no ar**: Ciências, Matemática, Português, História, Geografia e Inglês — 284 questões comentadas no total, todas com resumo de estudo por rodada.
   por matéria).
-- Próximo lote: as matérias do **8º ano** e, depois, o **4º bimestre** — mesmo fluxo: fotos → um arquivo por matéria.
+- **8º ano (3º bimestre) no ar**: Matemática (com questões de resposta digitada), Ciências, Português, História e Geografia — 137 questões. Próximo lote: 4º bimestre dos dois anos.
   matéria**, com rodadas, resumos e questões comentadas — uma ou duas matérias
   por mensagem, para manter a qualidade das explicações.
 - Quando chegar o material do **8º ano** e o do **4º bimestre**: mesmo fluxo.
