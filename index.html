@@ -175,6 +175,8 @@ input:focus{outline:none;border-color:var(--uva)}
 .painel-acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .tag-ok{font-size:12px;font-weight:700;color:var(--verde-ok)}
 .tag-bloq{font-size:12px;font-weight:700;color:var(--coral)}
+.tag-pend{font-size:12px;font-weight:700;color:var(--tinta-fraca)}
+.apagar.aprovar{border-color:var(--verde-ok);color:var(--verde-ok)}
 .resumo ul{margin:12px 0 0;padding-left:20px}
 .resumo li{margin-bottom:9px;font-size:15px}
 .resumo li::marker{color:var(--uva)}
@@ -389,7 +391,7 @@ function telaEntrada(){
       const nv = nivelDe(p.dados.xp);
       html += `<button class="linha-perfil" data-perfil="${k}">
         <span class="av">${p.avatar}</span>
-        <span><b>${p.nome}</b><small>${p.ano} · Nível ${nv.numero} · ${p.dados.xp} XP${(p.bloqueado||bloqueadoGlobal(p.nome,p.ano))?' · ⛔ bloqueado':''}</small></span>
+        <span><b>${p.nome}</b><small>${p.ano} · Nível ${nv.numero} · ${p.dados.xp} XP${(p.bloqueado||bloqueadoGlobal(p.nome,p.ano))?' · ⛔ bloqueado':(p.pendente?' · ⏳ aguardando aprovação':'')}</small></span>
         <span class="entrar">Entrar ›</span>
       </button>`;
     });
@@ -409,9 +411,7 @@ function telaEntrada(){
       <label for="n-senha">Senha de 4 números</label>
       <input id="n-senha" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
       <p class="dica">Serve só para separar o seu perfil dos outros. Não use uma senha de verdade.</p>
-      <label for="n-convite">Código de convite</label>
-      <input id="n-convite" maxlength="12" placeholder="Ex.: K7M2P" autocomplete="off" style="text-transform:uppercase">
-      <p class="dica">Peça o seu código para a ${ADMIN.nome} — ela gera no Painel de convites, aqui embaixo. O código vale para o seu nome e o seu ano.</p>
+      <p class="dica">Depois de criar o perfil, a ${ADMIN.nome} aprova o seu acesso.</p>
       <div class="acoes"><button class="btn" id="btn-criar">Criar perfil</button></div>
       <p class="erro-form" id="erro-criar" hidden></p>
     </div>
@@ -449,7 +449,6 @@ function anosDisponiveis(){
 async function criarPerfil(){
   const nome = $("#n-nome").value.trim();
   const senha = $("#n-senha").value.trim();
-  const convite = $("#n-convite").value.trim().toUpperCase();
   const erro = $("#erro-criar");
   const chave = nome.toLowerCase();
   const ano = selecionado("#n-anos","ano")||anosDisponiveis()[0];
@@ -457,18 +456,45 @@ async function criarPerfil(){
   if(bloqueadoGlobal(nome, ano)) return falha(erro,"Esse acesso está bloqueado. Fale com a "+ADMIN.nome+".");
   if(banco.perfis[chave]) return falha(erro,"Já existe um perfil com esse nome. Escolha outro ou entre nele.");
   if(!/^\d{4}$/.test(senha)) return falha(erro,"A senha precisa ter 4 números.");
-  const valido = convite === codigoConvite(nome, ano) || convite === ADMIN.senha.toUpperCase();
-  if(!valido) return falha(erro,`Código de convite inválido para esse nome e ano. Confira com a ${ADMIN.nome} se digitou o nome exatamente como ela cadastrou.`);
   banco.perfis[chave] = {
     nome, avatar:selecionado("#n-avatares","av")||"🦊",
-    ano, senha:embaralharSenha(senha), dados:dadosZero()
+    ano, senha:embaralharSenha(senha), pendente:true, dados:dadosZero()
   };
   await salvar();
   perfil = banco.perfis[chave];
-  filtroAno = perfil.ano;
-  telaEstante();
+  telaAprovacao(chave);
 }
 function falha(el,msg){ el.textContent = msg; el.hidden = false; }
+
+function telaAprovacao(chave){
+  const p = banco.perfis[chave];
+  cabecalho("Quase lá, "+p.nome+"!", "Falta a aprovação da "+ADMIN.nome);
+  telas.entrada.innerHTML = `
+    <button class="voltar" id="btn-volta-entrada">← Voltar</button>
+    <div class="cartao intro" style="margin-top:10px">
+      <p><strong>Seu perfil foi criado</strong> e está aguardando aprovação. ⏳</p>
+      <p style="margin-top:8px">Mande uma mensagem para a <b>${ADMIN.nome}</b> dizendo seu <b>nome (${p.nome})</b> e seu <b>ano (${p.ano})</b>. Ela vai aprovar seu acesso e te enviar o <b>código de liberação</b>.</p>
+    </div>
+    <div class="cartao">
+      <label for="l-codigo">Código de liberação</label>
+      <input id="l-codigo" maxlength="12" placeholder="Ex.: K7M2P" autocomplete="off" style="text-transform:uppercase">
+      <div class="acoes"><button class="btn" id="btn-liberar">Liberar meu acesso</button></div>
+      <p class="erro-form" id="erro-liberar" hidden></p>
+    </div>`;
+  mostrar("entrada");
+  $("#btn-volta-entrada").addEventListener("click", telaEntrada);
+  $("#btn-liberar").addEventListener("click", async ()=>{
+    const cod = $("#l-codigo").value.trim().toUpperCase();
+    if(bloqueadoGlobal(p.nome, p.ano)) return falha($("#erro-liberar"),"Esse acesso está bloqueado. Fale com a "+ADMIN.nome+".");
+    const ok = cod === codigoConvite(p.nome, p.ano) || cod === ADMIN.senha.toUpperCase();
+    if(!ok) return falha($("#erro-liberar"),`Código inválido para ${p.nome} (${p.ano}). Confira com a ${ADMIN.nome} se ela digitou seu nome exatamente assim.`);
+    delete p.pendente;
+    await salvar();
+    perfil = p;
+    filtroAno = p.ano;
+    telaEstante();
+  });
+}
 
 function pedirSenha(chave){
   const p = banco.perfis[chave];
@@ -488,7 +514,8 @@ function pedirSenha(chave){
   const tentar = async ()=>{
     if(p.bloqueado || bloqueadoGlobal(p.nome, p.ano)) return falha($("#erro-senha"), "O acesso de "+p.nome+" está bloqueado. Fale com a "+ADMIN.nome+".");
     if(embaralharSenha(campo.value.trim()) !== p.senha) return falha($("#erro-senha"),"Senha errada. Tenta de novo.");
-    perfil = p; filtroAno = p.ano; telaEstante();
+    perfil = p; if(p.pendente){ perfil = p; return telaAprovacao(chave); }
+    filtroAno = p.ano; telaEstante();
   };
   $("#btn-entrar").addEventListener("click", tentar);
   campo.addEventListener("keydown", e=>{ if(e.key==="Enter") tentar(); });
@@ -536,11 +563,13 @@ function painelAdmin(resultado){
     const bloqLocal = !!p.bloqueado, bloqGlobal = bloqueadoGlobal(p.nome, p.ano);
     const status = bloqGlobal ? `<span class="tag-bloq">⛔ bloqueada no site</span>`
                  : bloqLocal ? `<span class="tag-bloq">⛔ bloqueada</span>`
+                 : p.pendente ? `<span class="tag-pend">⏳ pendente</span>`
                  : `<span class="tag-ok">✔ ativa</span>`;
     listaPerfis += `<div class="painel-linha">
       <span>${p.avatar} <b>${p.nome}</b> ${status}<br>
       <small>${p.ano} · ${p.dados.xp} XP · ${p.dados.partidas} partidas · ${p.dados.acertosTotais} acertos</small></span>
       <span class="painel-acoes">
+        ${p.pendente && !bloqGlobal ? `<button class="apagar aprovar" data-aprovar="${k}">aprovar</button>` : ""}
         ${bloqGlobal ? "" : `<button class="apagar bloq" data-bloq="${k}">${bloqLocal?"desbloquear":"bloquear"}</button>`}
         <button class="apagar" data-apagar="${k}">apagar</button>
       </span>
@@ -551,8 +580,8 @@ function painelAdmin(resultado){
     <button class="voltar" id="btn-volta-entrada">← Sair do painel</button>
 
     <div class="cartao" style="margin-top:10px">
-      <h3>Convidar uma amiga</h3>
-      <p class="dica" style="margin-top:4px">O código vale para <b>esse nome e esse ano</b>, em qualquer aparelho. A amiga precisa digitar o nome exatamente assim ao criar o perfil.</p>
+      <h3>Aprovar uma amiga</h3>
+      <p class="dica" style="margin-top:4px">A amiga primeiro cria o perfil no site (nome, ano e senha). Depois você gera aqui o <b>código de liberação</b> — ele vale para <b>esse nome e esse ano</b>, em qualquer aparelho. Digite o nome exatamente como ela cadastrou.</p>
       <label for="c-nome">Nome da amiga</label>
       <input id="c-nome" maxlength="18" placeholder="Ex.: Amanda" autocomplete="off">
       <label>Ano dela</label>
@@ -561,13 +590,13 @@ function painelAdmin(resultado){
       <p class="erro-form" id="erro-gerar" hidden></p>
       ${resultado ? `
         <div class="codigo-grande">${resultado.codigo}</div>
-        <div class="copiar-texto">Mensagem pronta para enviar: <br><b>“Seu convite do Estudário: entre no site, crie o perfil com o nome ${resultado.nome} (${resultado.ano}) e use o código ${resultado.codigo}.”</b></div>` : ""}
+        <div class="copiar-texto">Mensagem pronta para enviar: <br><b>“Aprovado! 🎉 Seu código de liberação do Estudário é ${resultado.codigo}. Entre no seu perfil (${resultado.nome}, ${resultado.ano}) e digite o código para liberar.”</b></div>` : ""}
     </div>
 
     <div class="cartao">
       <h3>Gestão de usuárias — este aparelho</h3>
       ${listaPerfis}
-      <p class="dica"><b>Bloquear</b> impede a pessoa de entrar no perfil neste aparelho (dá para desbloquear depois). <b>Apagar</b> remove o perfil e toda a pontuação.</p>
+      <p class="dica"><b>Aprovar</b> libera na hora um perfil pendente criado neste aparelho (para amigas em outros aparelhos, gere o código de liberação acima). <b>Bloquear</b> impede a pessoa de entrar no perfil neste aparelho (dá para desbloquear depois). <b>Apagar</b> remove o perfil e toda a pontuação.</p>
       <p class="dica">Os perfis das amigas ficam nos aparelhos delas. Para <b>bloquear uma amiga em qualquer aparelho</b>, existe a lista de bloqueio do site: peça ao responsável, que solicita a atualização — no próximo acesso dela, o Estudário nega a entrada e o código dela deixa de valer.</p>
     </div>`;
   mostrar("entrada");
@@ -576,11 +605,15 @@ function painelAdmin(resultado){
   $("#btn-volta-entrada").addEventListener("click", telaEntrada);
   $("#btn-gerar").addEventListener("click", ()=>{
     const nome = $("#c-nome").value.trim();
-    if(nome.length < 2) return falha($("#erro-gerar"),"Escreva o nome da amiga.");
+    if(nome.length < 2) return falha($("#erro-gerar"),"Escreva o nome da amiga, igualzinho ao cadastro dela.");
     const ano = selecionado("#c-anos","ano");
     if(bloqueadoGlobal(nome, ano)) return falha($("#erro-gerar"),"Esse nome está na lista de bloqueio do site — o código não funcionaria.");
     painelAdmin({nome, ano, codigo:codigoConvite(nome, ano)});
   });
+  telas.entrada.querySelectorAll("[data-aprovar]").forEach(b=>b.addEventListener("click", async ()=>{
+    delete banco.perfis[b.dataset.aprovar].pendente;
+    await salvar(); painelAdmin();
+  }));
   telas.entrada.querySelectorAll("[data-bloq]").forEach(b=>b.addEventListener("click", async ()=>{
     const p = banco.perfis[b.dataset.bloq];
     p.bloqueado = !p.bloqueado;
