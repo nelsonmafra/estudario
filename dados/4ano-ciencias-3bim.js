@@ -71,7 +71,7 @@ QUIZ.registrar({
      alt:["Cárie","Covid-19","Dengue","Sarampo"],
      c:0, exp:"Covid-19, dengue, sarampo e caxumba são causadas por vírus. A cárie é causada por bactérias da boca."},
 
-    {p:"No glossário do livro, virose é:",
+    {p:"O que é uma virose?",
      alt:["Qualquer doença ou infecção provocada por vírus","Uma doença só de criança","Uma infecção causada por bactéria","Uma alergia a alimentos"],
      c:0, exp:"Virose é qualquer doença ou infecção provocada por vírus."},
 
@@ -86,7 +86,7 @@ QUIZ.registrar({
 
     {p:"Existem microrganismos benéficos? O livro dá qual exemplo?",
      alt:["Sim: os lactobacilos, que vivem no intestino humano e ajudam no bom funcionamento desse órgão","Não, todos os microrganismos fazem mal","Sim: o vírus da gripe, que fortalece o corpo","Sim: as bactérias da cárie, que limpam os dentes"],
-     c:0, exp:"Apesar de os microrganismos geralmente terem uma imagem negativa, existem muitos benéficos. As bactérias do grupo dos lactobacilos vivem no intestino humano e ajudam no bom funcionamento desse órgão."},
+     c:0, exp:"Apesar de os microrganismos geralmente terem fama de vilões, existem muitos benéficos. As bactérias do grupo dos lactobacilos vivem no intestino humano e ajudam no bom funcionamento desse órgão."},
 
     {p:"Por que baratas, ratos, moscas e formigas são um problema para a nossa saúde?",
      alt:["Carregam milhares de microrganismos que podem contaminar utensílios e alimentos","Porque comem muito","Porque são microrganismos","Porque fazem barulho na cozinha"],
@@ -116,8 +116,8 @@ QUIZ.registrar({
 
     {p:"Numa placa de Petri, as colônias de fungos têm que aspecto?",
      alt:["Aveludado, parecido com algodão","Pontinhos amarelados e lisos","Transparente como água","Formato de estrela"],
-     c:0, exp:"As colônias de fungos ficam com aspecto aveludado, parecido com algodão. Já as colônias de bactérias da foto do livro aparecem como pontinhos amarelados.",
-     err:{1:"Esses são os pontinhos das colônias de bactérias na foto do livro."}},
+     c:0, exp:"As colônias de fungos ficam com aspecto aveludado, parecido com algodão. Já as colônias de bactérias costumam aparecer como pontinhos, muitas vezes amarelados.",
+     err:{1:"Pontinhos amarelados e lisos são o aspecto típico das colônias de bactérias."}},
 
     {p:"Qual aparelho é usado para analisar os microrganismos?",
      alt:["Microscópio","Telescópio","Termômetro","Estetoscópio"],
@@ -132,7 +132,7 @@ QUIZ.registrar({
      alt:["Na platina","Na ocular","Na objetiva","No pé do aparelho"],
      c:0, exp:"A platina é a parte onde fica o material ou organismo que está sendo observado."},
 
-    {p:"Que equipamentos a pesquisadora da foto usa para se proteger ao pegar uma amostra de vírus?",
+    {p:"Que equipamentos um cientista deve usar para se proteger ao pegar uma amostra de vírus?",
      alt:["Avental descartável com touca, óculos de proteção, máscara e luvas","Só luvas","Avental e chinelo","Máscara e boné"],
      c:0, exp:"Quando o microrganismo pode causar doenças, é necessário usar equipamentos que ofereçam mais segurança: avental descartável com touca, óculos de proteção, máscara e luvas."},
 
@@ -258,7 +258,7 @@ QUIZ.registrar({
      alt:["Lixo (rejeito)","Resíduo reciclável","Resíduo orgânico","Material de compostagem"],
      c:0, exp:"A esponja de lavar louça aparece no livro como exemplo de lixo (rejeito), junto com papéis sujos, fraldas e chicletes: não tem mais utilidade nem pode ser reaproveitada."},
 
-    {p:"No jogo dos 7 erros do Módulo 10, por que a segunda cozinha é a melhor para preparar sua comida?",
+    {p:"Compare duas cozinhas: uma com lixo aberto, gato no balcão e mofo na parede; outra limpa, com lixo fechado e cozinheiro de touca e avental. Por que a segunda é a melhor para preparar comida?",
      alt:["Está limpa, sem animais, sem lixo aberto e o cozinheiro usa touca e avental","Porque é maior","Porque tem um gato para caçar ratos","Porque a comida fica mais bonita"],
      c:0, exp:"Na cozinha limpa não há gato circulando, o lixo está fechado, não há mofo na parede nem louça suja acumulada, e o cozinheiro usa touca e avental. Tudo isso reduz a contaminação do alimento por microrganismos.",
      err:{2:"O gato na cozinha é um problema: animais carregam microrganismos que contaminam os alimentos."}},
@@ -334,7 +334,7 @@ QUIZ.registrar({
      alt:["Que o fungo do mofo estava secretando uma substância que matava as bactérias","Que as bactérias tinham fugido da placa","Que o mofo tinha comido as bactérias","Que a placa não tinha meio de cultura"],
      c:0, exp:"Aparentemente, o fungo que tinha causado o mofo estava secretando uma substância que matava as bactérias."},
 
-    {p:"No glossário do livro, secretar significa:",
+    {p:"O que significa secretar?",
      alt:["Produzir um tipo específico de substância","Guardar em segredo","Absorver alimento","Multiplicar-se rapidamente"],
      c:0, exp:"Secretar é produzir um tipo específico de substância."},
 
@@ -388,9 +388,9 @@ QUIZ.registrar({
      alt:["Não: existem vacinas específicas para cada fase da vida","Sim, depois dos 12 anos não precisa mais","Sim, só bebês tomam vacina","Só idosos precisam de vacina"],
      c:0, exp:"Existem vacinas específicas para cada fase da vida: crianças, adolescentes, mulheres grávidas, idosos etc."},
 
-    {p:"Na atividade do Módulo 13, qual alternativa está CORRETA?",
+    {p:"Qual destas frases sobre vacinas está CORRETA?",
      alt:["Ao tomar a vacina, a pessoa corre menos risco de adoecer da doença contra a qual está sendo imunizada","As vacinas devem ser tomadas apenas na infância","Apenas os seres humanos podem ser vacinados","A vacina cura quem já está doente"],
-     c:0, exp:"A correta é a alternativa b) do livro. As outras estão erradas porque existem vacinas para todas as fases da vida e porque os animais também podem ser vacinados."},
+     c:0, exp:"As outras frases estão erradas porque existem vacinas para todas as fases da vida e porque os animais também podem ser vacinados."},
 
     {p:"Quantas e quais são as etapas antes de uma vacina chegar à população?",
      alt:["Três: pesquisa do microrganismo, fases de testagem em amostras e voluntários, e aprovação pelos órgãos de saúde do governo","Duas: fabricar e vender","Uma: aprovação do governo","Quatro: pesquisa, fabricação, propaganda e venda"],
@@ -408,22 +408,22 @@ QUIZ.registrar({
      alt:["A idade na qual cada vacina deve ser tomada e a quantidade de doses","O nome do médico da família","O tipo sanguíneo","As alergias da pessoa"],
      c:0, exp:"Todo brasileiro deve ter uma carteira de vacinação. Nela estão indicadas a idade na qual cada vacina deve ser tomada e a quantidade de doses."},
 
-    {p:"No esquema Organizar ideias, os microrganismos participam da produção de um combustível chamado:",
+    {p:"Os microrganismos participam da produção de um combustível chamado:",
      alt:["Etanol","Gasolina","Querosene","Carvão"],
-     c:0, exp:"No esquema, microrganismos participam da produção de alimentos e bebidas, de combustível (chamado etanol) e de medicamentos."},
+     c:0, exp:"Os microrganismos participam da produção de alimentos e bebidas, de combustível (o etanol) e de medicamentos."},
 
-    {p:"Quais alimentos e bebidas do esquema são produzidos com a participação de microrganismos?",
+    {p:"Quais alimentos e bebidas são produzidos com a participação de microrganismos?",
      alt:["Pães, pizzas e bebidas alcoólicas","Arroz, feijão e carne","Frutas e verduras","Sal e açúcar"],
-     c:0, exp:"No esquema, alimentos e bebidas produzidos com microrganismos aparecem como pães, pizzas e bebidas alcoólicas."},
+     c:0, exp:"Pães, pizzas e bebidas alcoólicas são produzidos com a ajuda de microrganismos (a fermentação)."},
 
-    {p:"Segundo o esquema, as doenças causadas por microrganismos podem ser prevenidas com:",
+    {p:"As doenças causadas por microrganismos podem ser prevenidas com:",
      alt:["Vacinas, higiene pessoal e higiene do ambiente","Somente antibióticos","Somente vacinas","Somente compostagem"],
-     c:0, exp:"O esquema mostra três formas de prevenção: vacinas, higiene pessoal e higiene do ambiente. Os antibióticos entram no tratamento das infecções bacterianas, e não na prevenção.",
+     c:0, exp:"As três formas de prevenção são: vacinas, higiene pessoal e higiene do ambiente. Os antibióticos entram no tratamento das infecções bacterianas, e não na prevenção.",
      err:{1:"Antibiótico é usado no tratamento de infecções bacterianas, não na prevenção."}},
 
-    {p:"No esquema, os medicamentos produzidos com microrganismos são os antibióticos, usados no tratamento de:",
+    {p:"Os medicamentos produzidos com a participação de microrganismos são os antibióticos, usados no tratamento de:",
      alt:["Infecções bacterianas","Viroses","Alergias","Cáries"],
-     c:0, exp:"No esquema: medicamentos, como os antibióticos, utilizados no tratamento de infecções bacterianas."}
+     c:0, exp:"Os antibióticos, produzidos com a ajuda de fungos e bactérias, são usados no tratamento de infecções bacterianas."}
   ]
 }
   ]
