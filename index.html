@@ -984,11 +984,56 @@ async function finalizar(){
   $("#btn-estante").addEventListener("click", telaEstante);
 }
 
+/* ================= migrações de progresso =================
+   Quando uma matéria muda de nome ou se divide, o progresso salvo nos
+   aparelhos é remapeado aqui — NUNCA descartado. Regra da casa: ids de
+   matéria e de rodada não mudam; se precisarem mudar, entra uma linha
+   nesta lista na mesma atualização. */
+const MIGRACOES = [
+  { de:"8ano-ciencias-3bim",
+    rodadas:{ r1:["8ano-biologia-3bim","r1"], r2:["8ano-quimica-3bim","r1"], r3:["8ano-fisica-3bim","r1"] } }
+];
+function casaDaQuestao(h){
+  for(const q of QUIZ.catalogo)
+    for(const r of q.rodadas)
+      for(const x of r.questoes)
+        if(qid(x) === h) return q.id;
+  return null;
+}
+function migrarPerfil(p){
+  let mudou = false;
+  MIGRACOES.forEach(m=>{
+    const antigo = p.dados.porQuiz && p.dados.porQuiz[m.de];
+    if(!antigo) return;
+    for(const rod in (antigo.recordes||{})){
+      const destino = m.rodadas[rod];
+      if(!destino) continue; // ex.: teste final não migra entre matérias
+      const [qN, rN] = destino;
+      const alvo = p.dados.porQuiz[qN] = p.dados.porQuiz[qN] || {recordes:{}, medalhas:{}, erros:{}};
+      if(!alvo.recordes[rN]) alvo.recordes[rN] = antigo.recordes[rod];
+      if(antigo.medalhas && antigo.medalhas[rod] && !alvo.medalhas[rN]) alvo.medalhas[rN] = antigo.medalhas[rod];
+    }
+    for(const h in (antigo.erros||{})){
+      const novoLar = casaDaQuestao(h);
+      if(!novoLar) continue;
+      const alvo = p.dados.porQuiz[novoLar] = p.dados.porQuiz[novoLar] || {recordes:{}, medalhas:{}, erros:{}};
+      if(!alvo.erros) alvo.erros = {};
+      if(!alvo.erros[h]) alvo.erros[h] = antigo.erros[h];
+    }
+    delete p.dados.porQuiz[m.de];
+    mudou = true;
+  });
+  return mudou;
+}
+
 /* ================= início ================= */
 (async function(){
   const salvo = await Armazem.ler();
   if(salvo && salvo.perfis) banco = salvo;
   Object.values(banco.perfis).forEach(p=>{ p.dados = Object.assign(dadosZero(), p.dados); });
+  let migrou = false;
+  Object.values(banco.perfis).forEach(p=>{ if(migrarPerfil(p)) migrou = true; });
+  if(migrou) await salvar();
   telaEntrada();
 })();
 </script>
