@@ -97,11 +97,15 @@ input{width:100%;font:inherit;padding:12px 14px;border-radius:14px;border:2px so
 input:focus{outline:none;border-color:var(--uva)}
 .erro-form{color:var(--coral);font-size:14px;font-weight:700;margin:10px 0 0}
 .dica{font-size:13px;color:var(--tinta-fraca);margin:8px 0 0}
-.linha-perfil{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:none;border:none;padding:10px 4px}
-.linha-perfil .av{cursor:pointer;pointer-events:none}
+.linha-perfil{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:var(--branco);border:2px solid rgba(18,52,59,.14);border-radius:14px;padding:12px;box-shadow:0 3px 0 rgba(18,52,59,.12);transition:transform .1s ease}
+.linha-perfil:hover,.linha-perfil:focus-visible{transform:translateY(-2px);border-color:var(--uva)}
+.linha-perfil .av{cursor:pointer;pointer-events:none;flex:0 0 48px}
 .linha-perfil b{font-family:"Baloo 2",sans-serif;font-size:19px;display:block}
 .linha-perfil small{color:var(--tinta-fraca)}
-.lista-perfis{display:grid;gap:4px}
+.linha-perfil .entrar{margin-left:auto;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:16px;color:#fff;background:var(--uva);border-radius:99px;padding:7px 16px;white-space:nowrap}
+.lista-perfis{display:grid;gap:10px}
+.admin-card{margin-top:24px;background:var(--papel);border-style:dashed;border-color:rgba(18,52,59,.3)}
+.admin-card .icone{background:var(--uva-clara)}
 
 /* quiz */
 .barra-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
@@ -344,18 +348,19 @@ function telaEntrada(){
   let html = "";
 
   if(nomes.length){
-    html += `<div class="cartao"><h3 style="margin-bottom:6px">Escolha seu perfil</h3><div class="lista-perfis">`;
+    html += `<div class="cartao" style="background:transparent;border:none;box-shadow:none;padding:0"><h3 style="margin-bottom:10px">Quem vai estudar hoje?</h3><div class="lista-perfis">`;
     nomes.forEach(k=>{
       const p = banco.perfis[k];
       const nv = nivelDe(p.dados.xp);
       html += `<button class="linha-perfil" data-perfil="${k}">
         <span class="av">${p.avatar}</span>
         <span><b>${p.nome}</b><small>${p.ano} · Nível ${nv.numero} · ${p.dados.xp} XP</small></span>
+        <span class="entrar">Entrar ›</span>
       </button>`;
     });
-    html += `</div></div>`;
+    html += `</div></div><div class="divisor"><span>ou</span></div>`;
   } else {
-    html += `<div class="cartao intro"><p>Bem-vinda ao <strong>${APP.nome}</strong>! Crie seu perfil, escolha seu ano e comece a treinar. Tudo o que você fizer fica guardado.</p></div>`;
+    html += `<div class="cartao intro"><p>Bem-vinda ao <strong>${APP.nome}</strong>! Crie seu perfil com o código de convite e comece a treinar. Tudo o que você fizer fica guardado.</p></div>`;
   }
 
   html += `<div class="cartao">
@@ -371,11 +376,15 @@ function telaEntrada(){
       <p class="dica">Serve só para separar o seu perfil dos outros. Não use uma senha de verdade.</p>
       <label for="n-convite">Código de convite</label>
       <input id="n-convite" maxlength="12" placeholder="Ex.: K7M2P" autocomplete="off" style="text-transform:uppercase">
-      <p class="dica">Peça o seu código para a ${ADMIN.nome}. Ele vale para o seu nome e o seu ano.</p>
+      <p class="dica">Peça o seu código para a ${ADMIN.nome} — ela gera no Painel de convites, aqui embaixo. O código vale para o seu nome e o seu ano.</p>
       <div class="acoes"><button class="btn" id="btn-criar">Criar perfil</button></div>
       <p class="erro-form" id="erro-criar" hidden></p>
     </div>
-    <button class="link-fraco" id="btn-admin">Painel de convites da ${ADMIN.nome}</button>`;
+    <button class="cartao item admin-card" id="btn-admin">
+      <span class="icone">🔑</span>
+      <span><h3>Painel de convites</h3>
+      <p class="desc">Área da ${ADMIN.nome}: gerar os códigos e liberar o acesso das amigas.</p></span>
+    </button>`;
 
   telas.entrada.innerHTML = html;
   mostrar("entrada");
