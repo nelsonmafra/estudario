@@ -16,20 +16,20 @@ QUIZ.registrar({
     "The ROOTS are underground: elas sustentam a árvore e ajudam a puxar água do solo.",
     "GUZZLE = beber muito rápido (the thirsty horse guzzled water). SCAMPER = correr rapidinho (the squirrel scampered up the tree).",
     "CONCERNED = preocupado (my mother was concerned when he was sick). FLATTER = elogiar para conseguir algo. WASTE = desperdiçar.",
-    "Dica de estudo do livro: fazer FLASHCARDS — palavra na frente, desenho ou frase atrás."
+    "Dica de estudo: fazer FLASHCARDS — palavra na frente, desenho ou frase atrás."
   ],
   questoes:[
     {p:"Em inglês, quem “designs buildings” (projeta prédios)?", alt:["An architect","A doctor","A gardener","A student"], c:0, exp:"Architect = arquiteto: “An architect designs buildings. He or she often has to solve problems in creative ways.”"},
     {p:"O que significa “lawyer”?", alt:["Advogado","Médico","Professor","Cozinheiro"], c:0, exp:"Lawyer é o advogado. Doctor = médico, teacher = professor."},
-    {p:"“Engineers ______ new ideas together.” Qual palavra completa a frase do livro?", alt:["brainstorm","sleep","eat","paint"], c:0, exp:"Brainstorm = trocar/inventar ideias em grupo: engenheiros pensam juntos para resolver problemas."},
-    {p:"O que a gardener (jardineira) faz, segundo a leitura?", alt:["Plants vegetables and flowers in her backyard","Drives a bus","Cooks pizza","Builds cars"], c:0, exp:"“The gardener plants vegetables and flowers in her backyard” — planta verduras e flores no quintal."},
-    {p:"Onde ficam as roots (raízes) da árvore e para que servem?", alt:["Ficam underground; sustentam a árvore e ajudam a puxar água","Ficam nas folhas; fazem sombra","Ficam no céu; seguram o vento","Não servem para nada"], c:0, exp:"“The roots are underground and support the tree. They also help the tree get water from underground.”"},
+    {p:"Complete a frase: “Engineers ______ new ideas together.”", alt:["brainstorm","sleep","eat","paint"], c:0, exp:"Brainstorm = trocar/inventar ideias em grupo: engenheiros pensam juntos para resolver problemas."},
+    {p:"O que faz uma gardener (jardineira)?", alt:["Plants vegetables and flowers in her backyard","Drives a bus","Cooks pizza","Builds cars"], c:0, exp:"“The gardener plants vegetables and flowers in her backyard” — planta verduras e flores no quintal."},
+    {p:"Em inglês, onde ficam as roots (raízes) da árvore e para que servem?", alt:["Ficam underground; sustentam a árvore e ajudam a puxar água","Ficam nas folhas; fazem sombra","Ficam no céu; seguram o vento","Não servem para nada"], c:0, exp:"“The roots are underground and support the tree. They also help the tree get water from underground.”"},
     {p:"“The thirsty horse guzzled water from the river.” O que significa “guzzled”?", alt:["Bebeu muito rápido","Cuspiu","Pulou","Dormiu"], c:0, exp:"Guzzle = beber depressa, em goladas. O cavalo estava thirsty (com sede) depois de brincar lá fora."},
     {p:"“The squirrel scampered up into the tree.” O que o esquilo fez?", alt:["Subiu correndo rapidinho na árvore","Caiu da árvore","Comeu a árvore","Derrubou a árvore"], c:0, exp:"Scamper = correr com passos rápidos e leves — típico de esquilo!"},
     {p:"O que significa “concerned” em “My mother was concerned when he was sick”?", alt:["Preocupada","Feliz","Com fome","Com sono"], c:0, exp:"Concerned = preocupado(a). A mãe ficou preocupada porque ele estava doente, com febre (fever)."},
     {p:"O que significa “thirsty”?", alt:["Com sede","Com frio","Cansado","Bravo"], c:0, exp:"Thirsty = com sede. Hungry = com fome — cuidado para não confundir!"},
-    {p:"Qual é a dica do livro para memorizar as key words?", alt:["Fazer flashcards: a palavra na frente e um desenho ou frase atrás","Ler uma vez e nunca mais","Copiar cem vezes","Não estudar"], c:0, exp:"Flashcards: “Write a key word on the front. On the back, make a drawing of each word.” Testar a si mesmo é o segredo."},
-    {p:"A unidade fala sobre “problem solvers”. O que é um problem solver?", alt:["Alguém que resolve problemas","Alguém que cria problemas","Um tipo de comida","Um jogo de tabuleiro"], c:0, exp:"Problem solver = solucionador de problemas: detetives, inventores, engenheiros, cientistas... e você!"},
+    {p:"Qual é uma boa técnica para memorizar palavras novas em inglês?", alt:["Fazer flashcards: a palavra na frente e um desenho ou frase atrás","Ler uma vez e nunca mais","Copiar cem vezes","Não estudar"], c:0, exp:"Flashcards: a palavra na frente, um desenho ou uma frase atrás — e testar a si mesma. É uma das formas mais eficazes de memorizar vocabulário."},
+    {p:"O que é um “problem solver”?", alt:["Alguém que resolve problemas","Alguém que cria problemas","Um tipo de comida","Um jogo de tabuleiro"], c:0, exp:"Problem solver = solucionador de problemas: detetives, inventores, engenheiros, cientistas... e você!"},
     {p:"O que significa “waste”, como em “it's important not to waste food”?", alt:["Desperdiçar","Cozinhar","Comprar","Plantar"], c:0, exp:"Waste = desperdiçar. É importante não desperdiçar comida — some people don't have enough to eat."}
   ]},
 { id:"r2", emoji:"⚖️", nome:"Rodada 2 — Grammar: comparatives & superlatives",
@@ -85,7 +85,7 @@ QUIZ.registrar({
     {p:"Em qual palavra o C tem som SUAVE (soft c, som de /s/)?", alt:["celebrate","cake","cat","car"], c:0, exp:"Antes de E ou I, o C soa como /s/: CElebrate, CIty. Antes de A, O, U, soa /k/: CAke, CAt.", err:{1:"Em cake o C é hard: som de /k/."}},
     {p:"Em qual palavra o C tem som FORTE (hard c, som de /k/)?", alt:["cake","celebrate","city","center"], c:0, exp:"CAke = /k/. Celebrate, city e center têm soft c (/s/)."},
     {p:"Qual grupo tem palavras com o digraph OW (o som de “au” em down)?", alt:["down, town, tower","cake, make, take","fish, dish, wish","see, tree, bee"], c:0, exp:"O+W juntos fazem um som só: dOWn, tOWn, tOWer."},
-    {p:"As fables (fábulas) da unidade falam de qual animal esperto?", alt:["A tricky fox (uma raposa ardilosa)","A sleepy cat","A big elephant","A slow turtle"], c:0, exp:"“Fables are about a tricky fox...” — a raposa esperta é a estrela das fábulas."},
+    {p:"Nas fábulas em inglês, qual animal costuma aparecer como o esperto (tricky)?", alt:["A tricky fox (uma raposa ardilosa)","A sleepy cat","A big elephant","A slow turtle"], c:0, exp:"A raposa (fox) é a personagem esperta clássica das fábulas — “a tricky fox”."},
     {p:"O que significa ser “resourceful”?", alt:["Ser criativo para resolver problemas com o que se tem","Ser preguiçoso","Ter muito dinheiro","Falar alto"], c:0, exp:"“We have to be creative and resourceful to get a good grade” — resourceful é quem dá um jeito com os recursos que tem."}
   ]}
 ]});
