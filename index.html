@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Estudário — estudo por matéria</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --tinta:#12343B; --tinta-fraca:#4A6B72; --papel:#F2F6F0;
+  --agar:#BEE3C0; --agar-escuro:#8FC79A;
+  --uva:#6C4AB6; --uva-clara:#EDE6FB;
+  --sol:#FFC145; --coral:#EE6C4D; --coral-claro:#FDE7E0;
+  --verde-ok:#2E8B57; --verde-claro:#E1F3E6;
+  --branco:#fff; --sombra:0 4px 0 rgba(18,52,59,.15); --raio:18px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--papel);
+  background-image:radial-gradient(circle at 12% 8%, rgba(190,227,192,.55) 0 220px, transparent 221px),
+                   radial-gradient(circle at 92% 78%, rgba(237,230,251,.7) 0 260px, transparent 261px);
+  background-attachment:fixed; color:var(--tinta);
+  font-family:"Atkinson Hyperlegible","Trebuchet MS",Verdana,sans-serif; font-size:17px; line-height:1.5;
+  -webkit-text-size-adjust:100%;
+}
+h1,h2,h3{font-family:"Baloo 2","Trebuchet MS",sans-serif;font-weight:800;line-height:1.15;margin:0}
+#app{max-width:660px;margin:0 auto;padding:20px 16px 64px}
+
+.topo{display:flex;align-items:center;gap:14px;margin-bottom:20px}
+.topo-texto{flex:1;min-width:0}
+.eyebrow{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--tinta-fraca);margin:0 0 2px}
+.topo h1{font-size:25px}
+.topo .sub{margin:2px 0 0;font-size:14px;color:var(--tinta-fraca)}
+.placa{width:80px;height:80px;flex:0 0 80px;border-radius:50%;
+  background:radial-gradient(circle at 34% 28%,#DCF0DB 0%,var(--agar) 62%,var(--agar-escuro) 100%);
+  border:5px solid rgba(18,52,59,.14);position:relative;overflow:hidden;
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.45)}
+.placa .brilho{position:absolute;top:8%;left:10%;width:38%;height:26%;border-radius:50%;background:rgba(255,255,255,.5);transform:rotate(-25deg)}
+.colonia{position:absolute;width:11px;height:11px;border-radius:50%;transform:translate(-50%,-50%) scale(0);animation:brotar .35s cubic-bezier(.34,1.56,.64,1) forwards}
+.colonia.certa{background:var(--sol);box-shadow:0 0 0 3px rgba(255,193,69,.35)}
+.colonia.errada{background:#B9C4BD;box-shadow:0 0 0 3px rgba(185,196,189,.3)}
+@keyframes brotar{to{transform:translate(-50%,-50%) scale(1)}}
+
+.cartao{background:var(--branco);border-radius:var(--raio);border:2px solid rgba(18,52,59,.1);box-shadow:var(--sombra);padding:18px;margin-bottom:14px}
+.intro{background:var(--uva-clara);border-color:rgba(108,74,182,.2)}
+.intro p{margin:0;font-size:15px}
+.intro strong{color:var(--uva)}
+
+.item{display:flex;gap:14px;align-items:flex-start;width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit;transition:transform .12s,box-shadow .12s}
+.item:hover,.item:focus-visible{transform:translateY(-2px);box-shadow:0 7px 0 rgba(18,52,59,.15)}
+.item .icone{flex:0 0 46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:23px;background:var(--agar)}
+.item.final .icone{background:var(--sol)}
+.item h3{font-size:19px}
+.item .desc{margin:2px 0 0;font-size:14px;color:var(--tinta-fraca)}
+.selo{display:inline-block;margin-top:8px;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:99px;background:var(--verde-claro);color:var(--verde-ok)}
+.selo.vazio{background:#EEF1EE;color:var(--tinta-fraca)}
+.medalha{font-size:19px;margin-left:6px;vertical-align:-2px}
+.divisor{display:flex;align-items:center;gap:10px;margin:24px 0 12px}
+.divisor span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--tinta-fraca);white-space:nowrap}
+.divisor::before,.divisor::after{content:"";height:2px;background:rgba(18,52,59,.12);flex:1;border-radius:2px}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.chip{font:inherit;font-size:14px;font-weight:700;padding:8px 15px;border-radius:99px;cursor:pointer;
+  background:var(--branco);border:2px solid rgba(18,52,59,.14);color:var(--tinta-fraca)}
+.chip[aria-pressed="true"]{background:var(--uva);border-color:var(--uva);color:#fff}
+
+/* perfil */
+.perfil{background:linear-gradient(160deg,#20515C 0%,#12343B 100%);border-color:rgba(18,52,59,.3);color:#EAF3EE;box-shadow:0 4px 0 rgba(18,52,59,.3)}
+.perfil-topo{display:flex;align-items:center;gap:12px}
+.nivel-num{flex:0 0 52px;height:52px;border-radius:16px;background:var(--sol);color:var(--tinta);display:grid;place-items:center;font-family:"Baloo 2",sans-serif;font-weight:800;font-size:13px;line-height:1;text-align:center}
+.nivel-num b{display:block;font-size:21px}
+.perfil-topo .quem{flex:1;min-width:0}
+.perfil-topo h3{font-size:19px;color:#fff}
+.perfil-topo .desc{margin:1px 0 0;font-size:13px;color:rgba(234,243,238,.72)}
+.xp-total{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:17px;color:var(--sol);white-space:nowrap}
+.perfil .trilho{background:rgba(255,255,255,.16);margin:13px 0 12px}
+.perfil .trilho i{background:var(--sol)}
+.stats{display:flex;gap:8px;text-align:center}
+.stats span{flex:1;background:rgba(255,255,255,.09);border-radius:12px;padding:7px 4px;font-size:12px;color:rgba(234,243,238,.75);line-height:1.3}
+.stats b{display:block;font-family:"Baloo 2",sans-serif;font-size:19px;color:#fff;font-weight:800}
+.conquistas{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.conq{font-size:12px;display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.12);border-radius:99px;padding:5px 11px;color:#fff}
+.conq.bloqueada{opacity:.38}
+.conq em{font-style:normal;font-size:15px}
+.aviso{font-size:12px;color:rgba(234,243,238,.6);margin:10px 0 0}
+
+/* entrada */
+.avatares{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+.av{font-size:24px;width:48px;height:48px;border-radius:14px;border:2px solid rgba(18,52,59,.14);background:#fff;cursor:pointer;display:grid;place-items:center}
+.av[aria-pressed="true"]{border-color:var(--uva);background:var(--uva-clara)}
+label{display:block;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tinta-fraca);margin:14px 0 5px}
+input{width:100%;font:inherit;padding:12px 14px;border-radius:14px;border:2px solid rgba(18,52,59,.16);background:#fff;color:var(--tinta)}
+input:focus{outline:none;border-color:var(--uva)}
+.erro-form{color:var(--coral);font-size:14px;font-weight:700;margin:10px 0 0}
+.dica{font-size:13px;color:var(--tinta-fraca);margin:8px 0 0}
+.linha-perfil{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:none;border:none;padding:10px 4px}
+.linha-perfil .av{cursor:pointer;pointer-events:none}
+.linha-perfil b{font-family:"Baloo 2",sans-serif;font-size:19px;display:block}
+.linha-perfil small{color:var(--tinta-fraca)}
+.lista-perfis{display:grid;gap:4px}
+
+/* quiz */
+.barra-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.contador{font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-fraca)}
+.voltar{background:none;border:none;font:inherit;font-size:14px;font-weight:700;color:var(--uva);cursor:pointer;padding:4px 2px}
+.voltar:hover{text-decoration:underline}
+.nome-rodada{margin:0 0 12px;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--tinta-fraca)}
+.trilho{height:9px;background:rgba(18,52,59,.1);border-radius:99px;overflow:hidden;margin-bottom:16px}
+.trilho i{display:block;height:100%;width:0;background:var(--uva);border-radius:99px;transition:width .3s}
+.pergunta{font-size:20px;font-family:"Baloo 2",sans-serif;font-weight:700;margin:0 0 14px}
+.opcoes{display:grid;gap:9px}
+.opcao{display:flex;gap:11px;align-items:flex-start;background:#fff;border:2px solid rgba(18,52,59,.14);border-radius:14px;padding:12px 13px;font:inherit;color:inherit;text-align:left;cursor:pointer;transition:border-color .12s,background .12s,transform .08s}
+.opcao:hover:not(:disabled){border-color:var(--uva)}
+.opcao:active:not(:disabled){transform:scale(.99)}
+.opcao .letra{flex:0 0 26px;height:26px;border-radius:8px;background:var(--uva-clara);color:var(--uva);display:grid;place-items:center;font-weight:700;font-size:14px}
+.opcao.marcada{border-color:var(--uva);background:var(--uva-clara)}
+.opcao.acerto{border-color:var(--verde-ok);background:var(--verde-claro)}
+.opcao.acerto .letra{background:var(--verde-ok);color:#fff}
+.opcao.erro{border-color:var(--coral);background:var(--coral-claro)}
+.opcao.erro .letra{background:var(--coral);color:#fff}
+.opcao:disabled{cursor:default;opacity:1}
+.feedback{margin-top:14px;border-radius:14px;padding:14px;border:2px solid;animation:subir .25s ease}
+.feedback.ok{background:var(--verde-claro);border-color:var(--verde-ok)}
+.feedback.nok{background:var(--coral-claro);border-color:var(--coral)}
+.feedback h4{margin:0 0 6px;font-family:"Baloo 2",sans-serif;font-size:18px}
+.feedback p{margin:0 0 8px;font-size:15px}
+.feedback p:last-child{margin-bottom:0}
+@keyframes subir{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+.btn{font-family:"Baloo 2",sans-serif;font-weight:700;font-size:18px;border:none;border-radius:14px;padding:13px 22px;cursor:pointer;background:var(--uva);color:#fff;box-shadow:0 4px 0 #4E3288;transition:transform .08s,box-shadow .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #4E3288}
+.btn.secundario{background:#fff;color:var(--tinta);box-shadow:0 4px 0 rgba(18,52,59,.18);border:2px solid rgba(18,52,59,.14)}
+.btn.secundario:active{box-shadow:0 1px 0 rgba(18,52,59,.18)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+.acoes{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.acoes .btn{flex:1 1 auto}
+.link-fraco{display:block;margin:20px auto 0;background:none;border:none;font:inherit;font-size:13px;color:var(--tinta-fraca);text-decoration:underline;cursor:pointer}
+
+.placar{text-align:center;padding:24px 18px}
+.placar .nota{font-family:"Baloo 2",sans-serif;font-size:56px;font-weight:800;line-height:1;color:var(--uva)}
+.placar .nota small{font-size:22px;color:var(--tinta-fraca)}
+.placar h2{font-size:24px;margin:10px 0 6px}
+.placar p{margin:0;color:var(--tinta-fraca)}
+.estrelas{font-size:26px;letter-spacing:4px;margin-top:8px}
+.ganho{background:var(--sol);color:var(--tinta);display:inline-block;font-family:"Baloo 2",sans-serif;font-weight:800;padding:5px 14px;border-radius:99px;margin-top:10px}
+.nova-conq{background:var(--uva-clara);border:2px dashed var(--uva);border-radius:12px;padding:10px;margin-top:12px;font-size:15px}
+.nova-conq b{color:var(--uva)}
+.revisao h3{font-size:19px;margin-bottom:10px}
+.item-revisao{border-left:5px solid var(--coral);background:#fff;border-radius:0 12px 12px 0;padding:12px 14px;margin-bottom:10px;border-top:2px solid rgba(18,52,59,.08);border-right:2px solid rgba(18,52,59,.08);border-bottom:2px solid rgba(18,52,59,.08)}
+.item-revisao.ok{border-left-color:var(--verde-ok)}
+.item-revisao .q{font-weight:700;margin:0 0 6px}
+.item-revisao p{margin:0 0 5px;font-size:15px}
+.item-revisao .marcou{color:var(--coral)}
+.item-revisao .certa{color:var(--verde-ok)}
+.item-revisao .porque{background:var(--papel);border-radius:10px;padding:9px 11px;margin-top:7px;font-size:15px}
+.vazio-msg{text-align:center;color:var(--tinta-fraca);padding:26px 10px}
+.codigo-grande{font-family:"Baloo 2",sans-serif;font-weight:800;font-size:34px;letter-spacing:.18em;text-align:center;background:var(--uva-clara);border:2px dashed var(--uva);border-radius:14px;padding:14px;color:var(--uva);margin-top:14px}
+.copiar-texto{background:var(--papel);border-radius:12px;padding:11px 13px;font-size:14px;margin-top:10px;color:var(--tinta-fraca)}
+.painel-linha{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 2px;border-bottom:2px solid rgba(18,52,59,.07);font-size:15px}
+.painel-linha:last-child{border-bottom:none}
+.painel-linha small{color:var(--tinta-fraca)}
+.apagar{background:none;border:none;font:inherit;font-size:13px;font-weight:700;color:var(--coral);cursor:pointer;white-space:nowrap}
+.resumo ul{margin:12px 0 0;padding-left:20px}
+.resumo li{margin-bottom:9px;font-size:15px}
+.resumo li::marker{color:var(--uva)}
+.rodape{margin-top:26px;text-align:center;font-size:13px;color:var(--tinta-fraca)}
+[hidden]{display:none!important}
+:focus-visible{outline:3px solid var(--uva);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:420px){.topo h1{font-size:22px}.placa{width:64px;height:64px;flex-basis:64px}.pergunta{font-size:18px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="topo">
+    <div class="placa" id="placa" aria-hidden="true"><div class="brilho"></div></div>
+    <div class="topo-texto">
+      <p class="eyebrow" id="eyebrow">Estudário</p>
+      <h1 id="titulo">Estudário</h1>
+      <p class="sub" id="subtitulo">Escolha o ano e a matéria para treinar</p>
+    </div>
+  </header>
+  <main>
+    <section id="tela-entrada"></section>
+    <section id="tela-estante" hidden></section>
+    <section id="tela-menu" hidden></section>
+    <section id="tela-quiz" hidden></section>
+    <section id="tela-fim" hidden></section>
+  </main>
+  <p class="rodape">A cada acerto nasce uma colônia na placa de Petri lá em cima.</p>
+</div>
+
+<!-- ====== REGISTRO DAS MATÉRIAS ======
+     Cada arquivo em dados/ se registra sozinho. Para adicionar uma matéria
+     nova, coloque o arquivo na pasta dados/ e acrescente uma linha aqui. -->
+<script>
+const QUIZ = {
+  catalogo: [],
+  registrar(q){ this.catalogo.push(q); }
+};
+</script>
+<script src="dados/4ano-ciencias-3bim.js"></script>
+<script src="dados/4ano-matematica-3bim.js"></script>
+<script src="dados/4ano-portugues-3bim.js"></script>
+<script src="dados/4ano-historia-3bim.js"></script>
+<script src="dados/4ano-geografia-3bim.js"></script>
+<script src="dados/4ano-ingles-3bim.js"></script>
+
+<script>
+/* =========================== MOTOR ===========================
+   Não precisa mexer aqui para acrescentar matérias.
+   ============================================================ */
+
+const APP = {
+  nome:"Estudário",
+  xpPorAcerto:10,
+  bonusGabarito:50,
+  notaParaPassar:0.7,
+  avatares:["🦊","🐼","🦄","🐙","🐝","🦋","🐢","🐨","🦖","🌻","🚀","🎨"],
+  niveis:[
+    {xp:0,nome:"Aprendiz"},{xp:150,nome:"Observadora"},{xp:400,nome:"Investigadora"},
+    {xp:750,nome:"Pesquisadora"},{xp:1200,nome:"Especialista"},{xp:1800,nome:"Mestra"}
+  ]
+};
+
+/* --- Administração e convites ---------------------------------------
+   ADMIN.nome  → quem aprova os acessos (aparece nas telas)
+   ADMIN.senha → senha do painel de convites. TROQUE antes de publicar.
+   SEGREDO     → tempero dos códigos de convite. Se trocar, os códigos
+                 já distribuídos param de valer.                        */
+const ADMIN = { nome:"Luiza", senha:"mafra-2026" };
+const SEGREDO = "estudario-vX7q2";
+
+function hash32(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h>>>0; }
+function normalizarNome(n){ return n.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," "); }
+function codigoConvite(nome, ano){
+  const h1 = hash32(normalizarNome(nome)+"|"+ano+"|"+SEGREDO);
+  const h2 = hash32(SEGREDO+"|"+ano+"|"+normalizarNome(nome));
+  const alf = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+  let x=h1, y=h2, out="";
+  for(let i=0;i<5;i++){ out += alf[((x^y)>>>0)%alf.length]; x=Math.floor(x/7)+1; y=Math.floor(y/5)+1; }
+  return out;
+}
+function qid(q){ return "q"+hash32(q.p); }
+
+const CONQUISTAS = [
+  {id:"primeira", emoji:"🧪", nome:"Primeira rodada",  dica:"Terminar uma rodada",              teste:d=>d.partidas>=1},
+  {id:"gabarito", emoji:"🎯", nome:"Sem errar uma",    dica:"Gabaritar qualquer rodada",        teste:d=>d.gabaritos>=1},
+  {id:"aprovada", emoji:"🏅", nome:"Aprovada",         dica:"Passar em um teste final",         teste:d=>d.testesPassados>=1},
+  {id:"sequencia",emoji:"⚡", nome:"Sequência de 10",  dica:"Acertar 10 seguidas",              teste:d=>d.melhorSequencia>=10},
+  {id:"explora",  emoji:"🧭", nome:"Exploradora",      dica:"Jogar 3 matérias diferentes",      teste:d=>Object.keys(d.porQuiz).length>=3},
+  {id:"ouro3",    emoji:"👑", nome:"Três ouros",       dica:"Ganhar 3 medalhas de ouro",        teste:d=>contarMedalhas(d,"ouro")>=3},
+  {id:"maratona", emoji:"🏃", nome:"Maratona",         dica:"Completar 10 partidas",            teste:d=>d.partidas>=10},
+  {id:"cem",      emoji:"🦠", nome:"100 acertos",      dica:"Acertar 100 questões no total",    teste:d=>d.acertosTotais>=100}
+];
+
+const $ = s=>document.querySelector(s);
+const telas = {
+  entrada:$("#tela-entrada"), estante:$("#tela-estante"), menu:$("#tela-menu"),
+  quiz:$("#tela-quiz"), fim:$("#tela-fim")
+};
+const placa = $("#placa");
+const LETRAS=["A","B","C","D","E"];
+const POSICOES=[[30,26],[62,22],[46,44],[22,58],[70,52],[38,72],[64,74],[52,14],[18,38],[80,36],
+                [34,88],[76,64],[14,72],[50,60],[86,50],[26,44],[58,88],[40,34],[70,88],[12,52]];
+
+/* ---------- armazenamento ---------- */
+const CHAVE = "estudario:v1";
+const Armazem = {
+  async ler(){
+    try{ if(window.storage){ const r = await window.storage.get(CHAVE); if(r&&r.value) return JSON.parse(r.value); } }catch(e){}
+    try{ const v = localStorage.getItem(CHAVE); if(v) return JSON.parse(v); }catch(e){}
+    return null;
+  },
+  async gravar(d){
+    try{ if(window.storage){ await window.storage.set(CHAVE, JSON.stringify(d)); return true; } }catch(e){}
+    try{ localStorage.setItem(CHAVE, JSON.stringify(d)); return true; }catch(e){}
+    return false;
+  }
+};
+
+let banco = { perfis:{} };
+let perfil = null;      // perfil logado
+let salvaOk = true;
+let filtroAno = null, filtroBim = "todos", quizAtual = null;
+
+const estado = { rodada:null, lista:[], indice:0, respostas:[], respondida:false, modo:"aquecimento", escolhaAtual:undefined };
+
+function dadosZero(){
+  return {xp:0, partidas:0, acertosTotais:0, questoesTotais:0, melhorSequencia:0,
+          gabaritos:0, testesPassados:0, conquistas:[], porQuiz:{}};
+}
+function contarMedalhas(d, tipo){
+  let n=0;
+  Object.values(d.porQuiz).forEach(q=>Object.values(q.medalhas||{}).forEach(m=>{ if(m===tipo) n++; }));
+  return n;
+}
+function embaralharSenha(txt){ // ofuscação simples: separa perfis, não é segurança de verdade
+  let h=5381; for(let i=0;i<txt.length;i++) h=((h*33)^txt.charCodeAt(i))>>>0;
+  return "h"+h.toString(36);
+}
+async function salvar(){ salvaOk = await Armazem.gravar(banco); }
+
+function nivelDe(xp){
+  let i=0; for(let k=0;k<APP.niveis.length;k++) if(xp>=APP.niveis[k].xp) i=k;
+  const atual=APP.niveis[i], prox=APP.niveis[i+1]||null;
+  const pct = prox ? Math.round(((xp-atual.xp)/(prox.xp-atual.xp))*100) : 100;
+  return {numero:i+1, nome:atual.nome, faltam: prox?prox.xp-xp:0, pct};
+}
+function medalhaDe(pct){ return pct===1?"ouro":pct>=.8?"prata":pct>=.6?"bronze":null; }
+const ICONE_MEDALHA={ouro:"🥇",prata:"🥈",bronze:"🥉"};
+
+function mostrar(nome){
+  Object.entries(telas).forEach(([k,el])=>el.hidden = (k!==nome));
+  window.scrollTo({top:0,behavior:"instant"});
+}
+function cabecalho(titulo, sub){
+  $("#titulo").textContent = titulo;
+  $("#subtitulo").textContent = sub;
+  $("#eyebrow").textContent = perfil ? perfil.nome + " · Nv " + nivelDe(perfil.dados.xp).numero : APP.nome;
+}
+function limparPlaca(){ placa.querySelectorAll(".colonia").forEach(e=>e.remove()); }
+function plantarColonia(ok,i){
+  const p=POSICOES[i%POSICOES.length], d=document.createElement("div");
+  d.className="colonia "+(ok?"certa":"errada"); d.style.left=p[0]+"%"; d.style.top=p[1]+"%";
+  placa.appendChild(d);
+}
+function embaralhar(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function prepararQuestao(q){
+  return {p:q.p, exp:q.exp, opcoes:embaralhar(q.alt.map((t,i)=>({texto:t, correta:i===q.c, motivo:(q.err&&q.err[i])||null})))};
+}
+function sortear(b,n){ return embaralhar(b).slice(0,Math.min(n,b.length)).map(prepararQuestao); }
+
+/* ================= TELA 1: entrada ================= */
+function telaEntrada(){
+  perfil = null;
+  limparPlaca();
+  cabecalho(APP.nome, "Quem vai estudar hoje?");
+  const nomes = Object.keys(banco.perfis);
+  let html = "";
+
+  if(nomes.length){
+    html += `<div class="cartao"><h3 style="margin-bottom:6px">Escolha seu perfil</h3><div class="lista-perfis">`;
+    nomes.forEach(k=>{
+      const p = banco.perfis[k];
+      const nv = nivelDe(p.dados.xp);
+      html += `<button class="linha-perfil" data-perfil="${k}">
+        <span class="av">${p.avatar}</span>
+        <span><b>${p.nome}</b><small>${p.ano} · Nível ${nv.numero} · ${p.dados.xp} XP</small></span>
+      </button>`;
+    });
+    html += `</div></div>`;
+  } else {
+    html += `<div class="cartao intro"><p>Bem-vinda ao <strong>${APP.nome}</strong>! Crie seu perfil, escolha seu ano e comece a treinar. Tudo o que você fizer fica guardado.</p></div>`;
+  }
+
+  html += `<div class="cartao">
+      <h3>${nomes.length?"Ou crie um perfil novo":"Criar meu perfil"}</h3>
+      <label for="n-nome">Seu nome</label>
+      <input id="n-nome" maxlength="18" placeholder="Ex.: Carol" autocomplete="off">
+      <label>Escolha seu bichinho</label>
+      <div class="avatares" id="n-avatares">${APP.avatares.map((a,i)=>`<button class="av" data-av="${a}" aria-pressed="${i===0}">${a}</button>`).join("")}</div>
+      <label>Seu ano</label>
+      <div class="chips" id="n-anos">${anosDisponiveis().map((a,i)=>`<button class="chip" data-ano="${a}" aria-pressed="${i===0}">${a}</button>`).join("")}</div>
+      <label for="n-senha">Senha de 4 números</label>
+      <input id="n-senha" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off">
+      <p class="dica">Serve só para separar o seu perfil dos outros. Não use uma senha de verdade.</p>
+      <label for="n-convite">Código de convite</label>
+      <input id="n-convite" maxlength="12" placeholder="Ex.: K7M2P" autocomplete="off" style="text-transform:uppercase">
+      <p class="dica">Peça o seu código para a ${ADMIN.nome}. Ele vale para o seu nome e o seu ano.</p>
+      <div class="acoes"><button class="btn" id="btn-criar">Criar perfil</button></div>
+      <p class="erro-form" id="erro-criar" hidden></p>
+    </div>
+    <button class="link-fraco" id="btn-admin">Painel de convites da ${ADMIN.nome}</button>`;
+
+  telas.entrada.innerHTML = html;
+  mostrar("entrada");
+
+  telas.entrada.querySelectorAll("[data-perfil]").forEach(b=>b.addEventListener("click",()=>pedirSenha(b.dataset.perfil)));
+  ligarGrupo("#n-avatares","[data-av]");
+  ligarGrupo("#n-anos","[data-ano]");
+  $("#btn-criar").addEventListener("click", criarPerfil);
+  $("#btn-admin").addEventListener("click", telaAdmin);
+}
+function ligarGrupo(sel, itens){
+  const g = $(sel); if(!g) return;
+  g.querySelectorAll(itens).forEach(b=>b.addEventListener("click",()=>{
+    g.querySelectorAll(itens).forEach(o=>o.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true");
+  }));
+}
+function selecionado(sel, attr){
+  const el = $(sel+' [aria-pressed="true"]');
+  return el ? el.dataset[attr] : null;
+}
+function anosDisponiveis(){
+  const anos = new Set(["4º ano","8º ano"]);
+  QUIZ.catalogo.forEach(q=>anos.add(q.ano));
+  return [...anos].sort();
+}
+async function criarPerfil(){
+  const nome = $("#n-nome").value.trim();
+  const senha = $("#n-senha").value.trim();
+  const convite = $("#n-convite").value.trim().toUpperCase();
+  const erro = $("#erro-criar");
+  const chave = nome.toLowerCase();
+  const ano = selecionado("#n-anos","ano")||anosDisponiveis()[0];
+  if(nome.length < 2) return falha(erro,"Escreva seu nome.");
+  if(banco.perfis[chave]) return falha(erro,"Já existe um perfil com esse nome. Escolha outro ou entre nele.");
+  if(!/^\d{4}$/.test(senha)) return falha(erro,"A senha precisa ter 4 números.");
+  const valido = convite === codigoConvite(nome, ano) || convite === ADMIN.senha.toUpperCase();
+  if(!valido) return falha(erro,`Código de convite inválido para esse nome e ano. Confira com a ${ADMIN.nome} se digitou o nome exatamente como ela cadastrou.`);
+  banco.perfis[chave] = {
+    nome, avatar:selecionado("#n-avatares","av")||"🦊",
+    ano, senha:embaralharSenha(senha), dados:dadosZero()
+  };
+  await salvar();
+  perfil = banco.perfis[chave];
+  filtroAno = perfil.ano;
+  telaEstante();
+}
+function falha(el,msg){ el.textContent = msg; el.hidden = false; }
+
+function pedirSenha(chave){
+  const p = banco.perfis[chave];
+  cabecalho(p.nome, "Digite sua senha para entrar");
+  telas.entrada.innerHTML = `
+    <div class="cartao">
+      <button class="voltar" id="btn-volta-entrada">← Trocar de perfil</button>
+      <h3 style="margin:10px 0 0">${p.avatar} Oi, ${p.nome}!</h3>
+      <label for="s-senha">Senha de 4 números</label>
+      <input id="s-senha" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off">
+      <div class="acoes"><button class="btn" id="btn-entrar">Entrar</button></div>
+      <p class="erro-form" id="erro-senha" hidden></p>
+      <button class="link-fraco" id="btn-esqueci">Esqueci minha senha</button>
+    </div>`;
+  const campo = $("#s-senha");
+  campo.focus();
+  const tentar = async ()=>{
+    if(embaralharSenha(campo.value.trim()) !== p.senha) return falha($("#erro-senha"),"Senha errada. Tenta de novo.");
+    perfil = p; filtroAno = p.ano; telaEstante();
+  };
+  $("#btn-entrar").addEventListener("click", tentar);
+  campo.addEventListener("keydown", e=>{ if(e.key==="Enter") tentar(); });
+  $("#btn-volta-entrada").addEventListener("click", telaEntrada);
+  $("#btn-esqueci").addEventListener("click", e=>{
+    if(e.target.dataset.c !== "sim"){
+      e.target.dataset.c = "sim";
+      e.target.textContent = "Peça ajuda ao seu pai. Ou toque aqui de novo para APAGAR este perfil e começar do zero.";
+      return;
+    }
+    delete banco.perfis[chave]; salvar().then(telaEntrada);
+  });
+  mostrar("entrada");
+}
+
+/* ================= Painel de convites (área da administradora) ================= */
+function telaAdmin(){
+  cabecalho("Painel de convites", "Área da "+ADMIN.nome);
+  telas.entrada.innerHTML = `
+    <div class="cartao">
+      <button class="voltar" id="btn-volta-entrada">← Voltar</button>
+      <h3 style="margin:10px 0 0">🔑 Painel de convites</h3>
+      <label for="a-senha">Senha do painel</label>
+      <input id="a-senha" type="password" autocomplete="off">
+      <div class="acoes"><button class="btn" id="btn-abrir">Abrir painel</button></div>
+      <p class="erro-form" id="erro-admin" hidden></p>
+    </div>`;
+  mostrar("entrada");
+  const tentar = ()=>{
+    if($("#a-senha").value !== ADMIN.senha) return falha($("#erro-admin"),"Senha do painel errada.");
+    painelAdmin();
+  };
+  $("#btn-abrir").addEventListener("click", tentar);
+  $("#a-senha").addEventListener("keydown", e=>{ if(e.key==="Enter") tentar(); });
+  $("#a-senha").focus();
+  $("#btn-volta-entrada").addEventListener("click", telaEntrada);
+}
+
+function painelAdmin(resultado){
+  cabecalho("Painel de convites", "Só a "+ADMIN.nome+" mexe aqui");
+  const nomes = Object.keys(banco.perfis);
+  let listaPerfis = nomes.length ? "" : `<p class="dica">Nenhum perfil criado neste aparelho ainda.</p>`;
+  nomes.forEach(k=>{
+    const p = banco.perfis[k];
+    listaPerfis += `<div class="painel-linha">
+      <span>${p.avatar} <b>${p.nome}</b><br><small>${p.ano} · ${p.dados.xp} XP · ${p.dados.partidas} partidas</small></span>
+      <button class="apagar" data-apagar="${k}">apagar</button>
+    </div>`;
+  });
+
+  telas.entrada.innerHTML = `
+    <button class="voltar" id="btn-volta-entrada">← Sair do painel</button>
+
+    <div class="cartao" style="margin-top:10px">
+      <h3>Convidar uma amiga</h3>
+      <p class="dica" style="margin-top:4px">O código vale para <b>esse nome e esse ano</b>, em qualquer aparelho. A amiga precisa digitar o nome exatamente assim ao criar o perfil.</p>
+      <label for="c-nome">Nome da amiga</label>
+      <input id="c-nome" maxlength="18" placeholder="Ex.: Amanda" autocomplete="off">
+      <label>Ano dela</label>
+      <div class="chips" id="c-anos">${anosDisponiveis().map((a,i)=>`<button class="chip" data-ano="${a}" aria-pressed="${i===0}">${a}</button>`).join("")}</div>
+      <div class="acoes"><button class="btn" id="btn-gerar">Gerar código</button></div>
+      <p class="erro-form" id="erro-gerar" hidden></p>
+      ${resultado ? `
+        <div class="codigo-grande">${resultado.codigo}</div>
+        <div class="copiar-texto">Mensagem pronta para enviar: <br><b>“Seu convite do Estudário: entre no site, crie o perfil com o nome ${resultado.nome} (${resultado.ano}) e use o código ${resultado.codigo}.”</b></div>` : ""}
+    </div>
+
+    <div class="cartao">
+      <h3>Perfis deste aparelho</h3>
+      ${listaPerfis}
+      <p class="dica">Perfis de outras amigas ficam nos aparelhos delas — aqui aparecem só os deste.</p>
+    </div>`;
+  mostrar("entrada");
+
+  ligarGrupo("#c-anos","[data-ano]");
+  $("#btn-volta-entrada").addEventListener("click", telaEntrada);
+  $("#btn-gerar").addEventListener("click", ()=>{
+    const nome = $("#c-nome").value.trim();
+    if(nome.length < 2) return falha($("#erro-gerar"),"Escreva o nome da amiga.");
+    const ano = selecionado("#c-anos","ano");
+    painelAdmin({nome, ano, codigo:codigoConvite(nome, ano)});
+    $("#c-nome") && ($("#c-nome").value = nome);
+  });
+  telas.entrada.querySelectorAll("[data-apagar]").forEach(b=>b.addEventListener("click", async e=>{
+    const k = b.dataset.apagar;
+    if(b.dataset.c !== "sim"){ b.dataset.c="sim"; b.textContent="apagar mesmo?"; return; }
+    delete banco.perfis[k]; await salvar(); painelAdmin();
+  }));
+}
+
+/* ================= TELA 2: estante de matérias ================= */
+function telaEstante(){
+  limparPlaca();
+  cabecalho(perfil.nome, perfil.ano+" · escolha a matéria para treinar");
+  const d = perfil.dados;
+  const nv = nivelDe(d.xp);
+  const aprov = d.questoesTotais ? Math.round(d.acertosTotais/d.questoesTotais*100)+"%" : "—";
+  const conqHtml = CONQUISTAS.map(c=>{
+    const tem = d.conquistas.includes(c.id);
+    return `<span class="conq ${tem?"":"bloqueada"}"><em>${c.emoji}</em>${tem?c.nome:c.dica}</span>`;
+  }).join("");
+
+  // cada perfil enxerga apenas o próprio ano
+  const doAno = QUIZ.catalogo.filter(q=>q.ano===perfil.ano);
+  const bims = ["todos", ...new Set(doAno.map(q=>q.bimestre))];
+  if(!bims.includes(filtroBim)) filtroBim = "todos";
+  const lista = doAno.filter(q=>filtroBim==="todos" || q.bimestre===filtroBim);
+
+  let html = `
+    <div class="cartao perfil">
+      <div class="perfil-topo">
+        <span class="nivel-num">Nv<b>${nv.numero}</b></span>
+        <span class="quem"><h3>${perfil.avatar} ${perfil.nome} — ${nv.nome}</h3>
+        <p class="desc">${perfil.ano} · ${nv.faltam? nv.faltam+" XP para o próximo nível":"Nível máximo!"}</p></span>
+        <span class="xp-total">${d.xp} XP</span>
+      </div>
+      <div class="trilho"><i style="width:${nv.pct}%"></i></div>
+      <div class="stats">
+        <span><b>${d.partidas}</b>partidas</span>
+        <span><b>${d.acertosTotais}</b>acertos</span>
+        <span><b>${aprov}</b>aproveitamento</span>
+        <span><b>${d.melhorSequencia}</b>seguidas</span>
+      </div>
+      <div class="conquistas">${conqHtml}</div>
+      ${salvaOk?"":`<p class="aviso">Não consegui gravar neste aparelho — o progresso vale só até fechar a página.</p>`}
+    </div>
+
+    <div class="divisor"><span>Bimestre</span></div>
+    <div class="chips" id="f-bim">${bims.map(b=>`<button class="chip" data-bim="${b}" aria-pressed="${b===filtroBim}">${b==="todos"?"Todos":b}</button>`).join("")}</div>`;
+
+  if(!lista.length){
+    html += `<div class="cartao vazio-msg">As matérias do ${perfil.ano} ainda estão sendo preparadas.<br>Assim que o material entrar, elas aparecem aqui sozinhas.</div>`;
+  } else {
+    lista.forEach(q=>{
+      const pq = d.porQuiz[q.id];
+      const feitas = pq ? Object.keys(pq.recordes).length : 0;
+      const totalRod = q.rodadas.length + 1;
+      const medOuro = pq ? Object.values(pq.medalhas).filter(m=>m==="ouro").length : 0;
+      const selo = feitas
+        ? `<span class="selo">${feitas} de ${totalRod} rodadas jogadas</span>${medOuro?`<span class="medalha">🥇 ${medOuro}</span>`:""}`
+        : `<span class="selo vazio">Ainda não começou</span>`;
+      html += `<button class="cartao item" data-quiz="${q.id}">
+          <span class="icone">${q.emoji||"📘"}</span>
+          <span><h3>${q.materia}</h3>
+            <p class="desc">${q.bimestre} · ${q.tema}</p>${selo}</span>
+        </button>`;
+    });
+  }
+  html += `<button class="link-fraco" id="btn-sair-perfil">Sair do perfil de ${perfil.nome}</button>`;
+
+  telas.estante.innerHTML = html;
+  mostrar("estante");
+  telas.estante.querySelectorAll("#f-bim [data-bim]").forEach(b=>b.addEventListener("click",()=>{ filtroBim=b.dataset.bim; telaEstante(); }));
+  telas.estante.querySelectorAll("[data-quiz]").forEach(b=>b.addEventListener("click",()=>telaMenu(b.dataset.quiz)));
+  $("#btn-sair-perfil").addEventListener("click", telaEntrada);
+}
+
+/* ================= TELA 3: menu do quiz ================= */
+function progressoQuiz(id){
+  if(!perfil.dados.porQuiz[id]) perfil.dados.porQuiz[id] = {recordes:{}, medalhas:{}, erros:{}};
+  const pq = perfil.dados.porQuiz[id];
+  if(!pq.erros) pq.erros = {};
+  return pq;
+}
+function telaMenu(id){
+  quizAtual = QUIZ.catalogo.find(q=>q.id===id);
+  limparPlaca();
+  cabecalho(quizAtual.materia, quizAtual.ano+" · "+quizAtual.bimestre);
+  const pq = progressoQuiz(id);
+  const total = quizAtual.rodadas.length;
+  const feitas = quizAtual.rodadas.filter(r=>pq.recordes[r.id]).length;
+
+  let html = `<button class="voltar" id="btn-volta-estante">← Todas as matérias</button>
+    <div class="cartao intro" style="margin-top:10px">
+      <p><strong>${quizAtual.tema}</strong>. Cada rodada começa com um resumo do que cai. Nas rodadas de aquecimento você descobre na hora se acertou e por quê. Depois encare o teste final, que só mostra o resultado no fim.</p>
+    </div>
+    <div class="divisor"><span>Aquecimento — ${feitas} de ${total} feitas</span></div>`;
+
+  quizAtual.rodadas.forEach(r=>{
+    const rec = pq.recordes[r.id], med = pq.medalhas[r.id];
+    const selo = rec ? `<span class="selo">Recorde: ${rec.acertos}/${rec.total}</span>${med?`<span class="medalha">${ICONE_MEDALHA[med]}</span>`:""}`
+                     : `<span class="selo vazio">Ainda não jogou</span>`;
+    html += `<button class="cartao item" data-rodada="${r.id}">
+        <span class="icone">${r.emoji||"📗"}</span>
+        <span><h3>${r.nome}</h3><p class="desc">${r.desc||""}</p>${selo}</span></button>`;
+  });
+
+  const nErros = Object.keys(pq.erros).length;
+  if(nErros){
+    html += `<div class="divisor"><span>Só suas</span></div>
+      <button class="cartao item" data-rodada="revisao">
+        <span class="icone">🩹</span>
+        <span><h3>Revisão dos meus erros</h3>
+        <p class="desc">As questões que você já errou nesta matéria voltam aqui. Acerte cada uma duas vezes para tirá-la da lista.</p>
+        <span class="selo">${nErros} ${nErros===1?"questão":"questões"} para dominar</span></span>
+      </button>`;
+  }
+
+  const recT = pq.recordes["final"], medT = pq.medalhas["final"];
+  const seloT = recT ? `<span class="selo">Recorde: ${recT.acertos}/${recT.total}</span>${medT?`<span class="medalha">${ICONE_MEDALHA[medT]}</span>`:""}`
+                     : `<span class="selo vazio">Aquece primeiro e depois vem</span>`;
+  html += `<div class="divisor"><span>Valendo</span></div>
+    <button class="cartao item final" data-rodada="final">
+      <span class="icone">🏆</span>
+      <span><h3>Teste final</h3>
+      <p class="desc">${quizAtual.qtdTeste||15} questões de toda a matéria. Sem dica no meio: o gabarito comentado sai no fim.</p>${seloT}</span>
+    </button>`;
+
+  telas.menu.innerHTML = html;
+  mostrar("menu");
+  $("#btn-volta-estante").addEventListener("click", telaEstante);
+  telas.menu.querySelectorAll("[data-rodada]").forEach(b=>b.addEventListener("click",()=>{
+    const rid = b.dataset.rodada;
+    const r = quizAtual.rodadas.find(x=>x.id===rid);
+    if(r && r.resumo && r.resumo.length) telaResumo(rid);
+    else iniciar(rid);
+  }));
+}
+
+/* Resumo da rodada: estudar antes de responder */
+function telaResumo(id){
+  const r = quizAtual.rodadas.find(x=>x.id===id);
+  cabecalho(quizAtual.materia, r.nome);
+  telas.menu.innerHTML = `
+    <button class="voltar" id="btn-volta-menu">← Rodadas</button>
+    <div class="cartao resumo" style="margin-top:10px">
+      <h3>📖 O que você precisa saber</h3>
+      <ul>${r.resumo.map(x=>`<li>${x}</li>`).join("")}</ul>
+    </div>
+    <div class="acoes">
+      <button class="btn" id="btn-comecar">Já li, começar a rodada</button>
+    </div>`;
+  mostrar("menu");
+  $("#btn-volta-menu").addEventListener("click", ()=>telaMenu(quizAtual.id));
+  $("#btn-comecar").addEventListener("click", ()=>iniciar(id));
+}
+
+/* ================= TELA 4: quiz ================= */
+function iniciar(id){
+  limparPlaca();
+  if(id === "final"){
+    const todas = quizAtual.rodadas.reduce((a,r)=>a.concat(r.questoes),[]);
+    estado.rodada = {id:"final", nome:"Teste final"};
+    estado.lista = sortear(todas, quizAtual.qtdTeste||15);
+    estado.modo = "teste";
+  } else if(id === "revisao"){
+    const pq = progressoQuiz(quizAtual.id);
+    const todas = quizAtual.rodadas.reduce((a,r)=>a.concat(r.questoes),[]);
+    const alvo = todas.filter(q=>pq.erros[qid(q)]);
+    estado.rodada = {id:"revisao", nome:"Revisão dos erros"};
+    estado.lista = sortear(alvo, quizAtual.qtdAquecimento||8);
+    estado.modo = "aquecimento";
+  } else {
+    const r = quizAtual.rodadas.find(x=>x.id===id);
+    estado.rodada = r;
+    estado.lista = sortear(r.questoes, quizAtual.qtdAquecimento||8);
+    estado.modo = "aquecimento";
+  }
+  estado.indice = 0; estado.respostas = []; estado.escolhaAtual = undefined;
+  mostrar("quiz");
+  desenharQuestao();
+}
+
+function desenharQuestao(){
+  estado.respondida = false;
+  const q = estado.lista[estado.indice], n = estado.indice+1, t = estado.lista.length;
+  telas.quiz.innerHTML = `
+    <div class="barra-topo">
+      <button class="voltar" id="btn-sair">← Sair da rodada</button>
+      <span class="contador">${n} de ${t}</span>
+    </div>
+    <p class="nome-rodada">${quizAtual.materia} · ${estado.rodada.nome}</p>
+    <div class="trilho"><i style="width:${((n-1)/t)*100}%"></i></div>
+    <div class="cartao">
+      <h2 class="pergunta">${q.p}</h2>
+      <div class="opcoes" id="opcoes"></div>
+      <div id="area-feedback"></div>
+      <div class="acoes" id="acoes"></div>
+    </div>`;
+  $("#btn-sair").addEventListener("click", ()=>telaMenu(quizAtual.id));
+  const cont = $("#opcoes");
+  q.opcoes.forEach((op,i)=>{
+    const b=document.createElement("button");
+    b.className="opcao";
+    b.innerHTML=`<span class="letra">${LETRAS[i]}</span><span>${op.texto}</span>`;
+    b.addEventListener("click",()=>escolher(i));
+    cont.appendChild(b);
+  });
+  if(estado.modo==="teste"){
+    $("#acoes").innerHTML = `<button class="btn" id="btn-proxima" disabled>${n===t?"Ver resultado":"Próxima"}</button>`;
+    $("#btn-proxima").addEventListener("click", avancar);
+  }
+}
+
+function escolher(i){
+  const q = estado.lista[estado.indice];
+  const botoes = telas.quiz.querySelectorAll(".opcao");
+  if(estado.modo==="teste"){
+    botoes.forEach(b=>b.classList.remove("marcada"));
+    botoes[i].classList.add("marcada");
+    estado.escolhaAtual = i;
+    $("#btn-proxima").disabled = false;
+    return;
+  }
+  if(estado.respondida) return;
+  estado.respondida = true;
+  const acertou = q.opcoes[i].correta;
+  const certo = q.opcoes.findIndex(o=>o.correta);
+  botoes.forEach((b,k)=>{ b.disabled=true; if(k===certo) b.classList.add("acerto"); if(k===i&&!acertou) b.classList.add("erro"); });
+  estado.respostas.push({q, escolha:i, acertou});
+  plantarColonia(acertou, estado.respostas.length-1);
+  mostrarFeedback(q,i,acertou);
+  const n=estado.indice+1, t=estado.lista.length;
+  $("#acoes").innerHTML = `<button class="btn" id="btn-proxima">${n===t?"Ver resultado":"Próxima"}</button>`;
+  $("#btn-proxima").addEventListener("click", avancar);
+  $("#btn-proxima").focus();
+}
+
+function mostrarFeedback(q, escolha, acertou){
+  const certa = q.opcoes.find(o=>o.correta).texto;
+  const area = $("#area-feedback");
+  if(acertou){
+    area.innerHTML = `<div class="feedback ok"><h4>Isso aí! ✅</h4><p>${q.exp}</p></div>`;
+  } else {
+    const motivo = q.opcoes[escolha].motivo;
+    area.innerHTML = `<div class="feedback nok"><h4>Ainda não 🔎</h4>
+      <p>Você marcou <strong>“${q.opcoes[escolha].texto}”</strong>. ${motivo||"Essa alternativa não é o que o livro diz."}</p>
+      <p>A resposta certa é <strong>“${certa}”</strong>.</p><p>${q.exp}</p></div>`;
+  }
+}
+
+function avancar(){
+  if(estado.modo==="teste"){
+    const q = estado.lista[estado.indice], i = estado.escolhaAtual;
+    const acertou = q.opcoes[i].correta;
+    estado.respostas.push({q, escolha:i, acertou});
+    plantarColonia(acertou, estado.respostas.length-1);
+    estado.escolhaAtual = undefined;
+  }
+  estado.indice++;
+  if(estado.indice >= estado.lista.length) finalizar();
+  else { desenharQuestao(); window.scrollTo({top:0,behavior:"smooth"}); }
+}
+
+/* ================= TELA 5: resultado ================= */
+async function finalizar(){
+  const acertos = estado.respostas.filter(r=>r.acertou).length;
+  const total = estado.respostas.length;
+  const pct = acertos/total;
+  const id = estado.rodada.id;
+  const d = perfil.dados;
+  const pq = progressoQuiz(quizAtual.id);
+
+  const ehRevisao = id === "revisao";
+  let seq=0, maior=0;
+  estado.respostas.forEach(r=>{ seq = r.acertou?seq+1:0; if(seq>maior) maior=seq; });
+
+  // memória de erros: errou → entra na lista (precisa acertar 2x para sair)
+  estado.respostas.forEach(r=>{
+    const k = "q"+hash32(r.q.p);
+    if(r.acertou){ if(pq.erros[k]){ pq.erros[k]--; if(pq.erros[k]<=0) delete pq.erros[k]; } }
+    else pq.erros[k] = 2;
+  });
+
+  let xpGanho = acertos*APP.xpPorAcerto;
+  if(pct===1 && !ehRevisao){ xpGanho += APP.bonusGabarito; d.gabaritos++; }
+  if(id==="final" && pct>=APP.notaParaPassar){ xpGanho += 25; d.testesPassados++; }
+
+  d.xp += xpGanho; d.partidas++; d.acertosTotais += acertos; d.questoesTotais += total;
+  if(maior > d.melhorSequencia) d.melhorSequencia = maior;
+
+  let novoRecorde = false, med = null;
+  if(!ehRevisao){
+    const rec = pq.recordes[id];
+    novoRecorde = !rec || acertos > rec.acertos;
+    if(novoRecorde) pq.recordes[id] = {acertos,total};
+    med = medalhaDe(pct);
+    const ordem={bronze:1,prata:2,ouro:3};
+    if(med && (!pq.medalhas[id] || ordem[med] > ordem[pq.medalhas[id]])) pq.medalhas[id] = med;
+  }
+
+  const novas = CONQUISTAS.filter(c=>!d.conquistas.includes(c.id) && c.teste(d));
+  novas.forEach(c=>d.conquistas.push(c.id));
+  await salvar();
+
+  let titulo,msg,estrelas;
+  const errosRestantes = Object.keys(pq.erros).length;
+  if(ehRevisao && errosRestantes===0){ titulo="Lista de erros zerada! 🩹✨"; msg="Você dominou tudo o que tinha errado nesta matéria. É assim que se aprende de verdade."; estrelas="🌟🌟🌟"; }
+  else if(pct===1){ titulo="Placa lotada de colônias!"; msg="Gabaritou. Essa parte está dominada."; estrelas="🌟🌟🌟"; }
+  else if(pct>=APP.notaParaPassar){ titulo="Muito bom!"; msg="Você já sabe a maior parte. Revise só o que está aqui embaixo."; estrelas="🌟🌟"; }
+  else if(pct>=0.5){ titulo="Está no caminho"; msg="Leia as explicações com calma e jogue de novo."; estrelas="🌟"; }
+  else { titulo="Bora treinar mais"; msg="Sem stress: leia as explicações, dê uma olhada no livro e repita."; estrelas="💪"; }
+
+  const paraRever = estado.modo==="teste" ? estado.respostas : estado.respostas.filter(r=>!r.acertou);
+  let revisao="";
+  if(paraRever.length){
+    revisao = `<div class="revisao"><h3>${estado.modo==="teste"?"Gabarito comentado":"O que revisar"}</h3>`;
+    paraRever.forEach(r=>{
+      const certa = r.q.opcoes.find(o=>o.correta).texto;
+      const sua = r.q.opcoes[r.escolha].texto, motivo = r.q.opcoes[r.escolha].motivo;
+      revisao += `<div class="item-revisao ${r.acertou?"ok":""}">
+        <p class="q">${r.acertou?"✅":"❌"} ${r.q.p}</p>
+        ${r.acertou?`<p class="certa">Você respondeu: ${sua}</p>`
+                   :`<p class="marcou">Você marcou: ${sua}</p><p class="certa">Resposta certa: ${certa}</p>`}
+        <div class="porque">${!r.acertou&&motivo?motivo+" ":""}${r.q.exp}</div></div>`;
+    });
+    revisao += `</div>`;
+  }
+
+  const nv = nivelDe(d.xp);
+  const conqHtml = novas.length ? `<div class="nova-conq">Conquista desbloqueada: ${novas.map(c=>`${c.emoji} <b>${c.nome}</b>`).join(" · ")}</div>` : "";
+
+  telas.fim.innerHTML = `
+    <div class="cartao placar">
+      <div class="nota">${acertos}<small>/${total}</small></div>
+      <div class="estrelas">${estrelas}${med?" "+ICONE_MEDALHA[med]:""}</div>
+      <h2>${titulo}</h2><p>${msg}</p>
+      <div class="ganho">+${xpGanho} XP${novoRecorde?" · novo recorde!":""}</div>
+      <p style="margin-top:10px;font-size:14px">Total: ${d.xp} XP — Nível ${nv.numero}, ${nv.nome}${nv.faltam?` (faltam ${nv.faltam} XP)`:""}</p>
+      ${conqHtml}
+    </div>
+    ${revisao}
+    <div class="acoes">
+      ${ehRevisao && errosRestantes===0 ? "" : `<button class="btn" id="btn-denovo">${ehRevisao?"Revisar de novo":"Jogar de novo com outras questões"}</button>`}
+      <button class="btn secundario" id="btn-menu">Outras rodadas</button>
+      <button class="btn secundario" id="btn-estante">Outra matéria</button>
+    </div>`;
+  mostrar("fim");
+  cabecalho(quizAtual.materia, "Resultado");
+  const bd = $("#btn-denovo"); if(bd) bd.addEventListener("click", ()=>iniciar(id));
+  $("#btn-menu").addEventListener("click", ()=>telaMenu(quizAtual.id));
+  $("#btn-estante").addEventListener("click", telaEstante);
+}
+
+/* ================= início ================= */
+(async function(){
+  const salvo = await Armazem.ler();
+  if(salvo && salvo.perfis) banco = salvo;
+  Object.values(banco.perfis).forEach(p=>{ p.dados = Object.assign(dadosZero(), p.dados); });
+  telaEntrada();
+})();
+</script>
+</body>
+</html>
