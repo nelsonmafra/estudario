@@ -117,6 +117,9 @@ input:focus{outline:none;border-color:var(--uva)}
 .trilho i{display:block;height:100%;width:0;background:var(--uva);border-radius:99px;transition:width .3s}
 .pergunta{font-size:20px;font-family:"Baloo 2",sans-serif;font-weight:700;margin:0 0 14px}
 .opcoes{display:grid;gap:9px}
+.resposta-num input{width:100%;font-family:"Baloo 2",sans-serif;font-weight:700;font-size:24px;text-align:center;padding:14px;border-radius:14px;border:2px solid rgba(18,52,59,.16);background:#fff;color:var(--tinta)}
+.resposta-num input:focus{outline:none;border-color:var(--uva)}
+.resposta-num input:disabled{background:var(--papel)}
 .opcao{display:flex;gap:11px;align-items:flex-start;background:#fff;border:2px solid rgba(18,52,59,.14);border-radius:14px;padding:12px 13px;font:inherit;color:inherit;text-align:left;cursor:pointer;transition:border-color .12s,background .12s,transform .08s}
 .opcao:hover:not(:disabled){border-color:var(--uva)}
 .opcao:active:not(:disabled){transform:scale(.99)}
@@ -219,6 +222,11 @@ const QUIZ = {
 <script src="dados/4ano-historia-3bim.js"></script>
 <script src="dados/4ano-geografia-3bim.js"></script>
 <script src="dados/4ano-ingles-3bim.js"></script>
+<script src="dados/8ano-matematica-3bim.js"></script>
+<script src="dados/8ano-ciencias-3bim.js"></script>
+<script src="dados/8ano-portugues-3bim.js"></script>
+<script src="dados/8ano-historia-3bim.js"></script>
+<script src="dados/8ano-geografia-3bim.js"></script>
 
 <script>
 /* =========================== MOTOR ===========================
@@ -345,7 +353,22 @@ function plantarColonia(ok,i){
 }
 function embaralhar(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
 function prepararQuestao(q){
-  return {p:q.p, exp:q.exp, opcoes:embaralhar(q.alt.map((t,i)=>({texto:t, correta:i===q.c, motivo:(q.err&&q.err[i])||null})))};
+  if(q.t === "num"){
+    return {tipo:"num", p:q.p, r:String(q.r), aceita:(q.aceita||[]).map(String), exp:q.exp};
+  }
+  return {tipo:"mc", p:q.p, exp:q.exp, opcoes:embaralhar(q.alt.map((t,i)=>({texto:t, correta:i===q.c, motivo:(q.err&&q.err[i])||null})))};
+}
+function normalizarNum(v){ return String(v).trim().toLowerCase().replace(/\s+/g,"").replace(/\./g, m=>m).replace(",","."); }
+function acertoNum(q, v){
+  const dado = normalizarNum(v);
+  const alvos = [q.r, ...q.aceita].map(normalizarNum);
+  const nf = parseFloat(dado);
+  return alvos.some(a=>{
+    const af = parseFloat(a);
+    if(!isNaN(nf) && !isNaN(af) && String(nf) === dado.replace(/,/,".").replace(/^\+/,"") ) return Math.abs(nf-af) < 1e-9;
+    if(!isNaN(nf) && !isNaN(af) && /^[-+]?\d+([.,]\d+)?$/.test(dado)) return Math.abs(nf-af) < 1e-9;
+    return a === dado;
+  });
 }
 function sortear(b,n){ return embaralhar(b).slice(0,Math.min(n,b.length)).map(prepararQuestao); }
 
@@ -753,11 +776,33 @@ function desenharQuestao(){
     <div class="trilho"><i style="width:${((n-1)/t)*100}%"></i></div>
     <div class="cartao">
       <h2 class="pergunta">${q.p}</h2>
-      <div class="opcoes" id="opcoes"></div>
+      <div id="area-resposta"></div>
       <div id="area-feedback"></div>
       <div class="acoes" id="acoes"></div>
     </div>`;
   $("#btn-sair").addEventListener("click", ()=>telaMenu(quizAtual.id));
+  const area = $("#area-resposta");
+
+  if(q.tipo === "num"){
+    area.innerHTML = `<div class="resposta-num"><input id="resp-num" inputmode="decimal" autocomplete="off" placeholder="Digite a resposta"></div>
+      <p class="dica">Pode usar vírgula ou ponto nos decimais.</p>`;
+    const campo = $("#resp-num");
+    if(estado.modo === "aquecimento"){
+      $("#acoes").innerHTML = `<button class="btn" id="btn-conferir">Conferir</button>`;
+      const conferir = ()=>{ if(campo.value.trim()) responderNum(campo.value.trim()); };
+      $("#btn-conferir").addEventListener("click", conferir);
+      campo.addEventListener("keydown", e=>{ if(e.key==="Enter") conferir(); });
+    } else {
+      $("#acoes").innerHTML = `<button class="btn" id="btn-proxima" disabled>${n===t?"Ver resultado":"Próxima"}</button>`;
+      $("#btn-proxima").addEventListener("click", avancar);
+      campo.addEventListener("input", ()=>{ $("#btn-proxima").disabled = !campo.value.trim(); });
+      campo.addEventListener("keydown", e=>{ if(e.key==="Enter" && campo.value.trim()) avancar(); });
+    }
+    campo.focus();
+    return;
+  }
+
+  area.innerHTML = `<div class="opcoes" id="opcoes"></div>`;
   const cont = $("#opcoes");
   q.opcoes.forEach((op,i)=>{
     const b=document.createElement("button");
@@ -770,6 +815,21 @@ function desenharQuestao(){
     $("#acoes").innerHTML = `<button class="btn" id="btn-proxima" disabled>${n===t?"Ver resultado":"Próxima"}</button>`;
     $("#btn-proxima").addEventListener("click", avancar);
   }
+}
+
+function responderNum(valor){
+  if(estado.respondida) return;
+  estado.respondida = true;
+  const q = estado.lista[estado.indice];
+  const acertou = acertoNum(q, valor);
+  $("#resp-num").disabled = true;
+  estado.respostas.push({q, escolha:valor, acertou});
+  plantarColonia(acertou, estado.respostas.length-1);
+  mostrarFeedback(q, valor, acertou);
+  const n=estado.indice+1, t=estado.lista.length;
+  $("#acoes").innerHTML = `<button class="btn" id="btn-proxima">${n===t?"Ver resultado":"Próxima"}</button>`;
+  $("#btn-proxima").addEventListener("click", avancar);
+  $("#btn-proxima").focus();
 }
 
 function escolher(i){
@@ -797,23 +857,31 @@ function escolher(i){
 }
 
 function mostrarFeedback(q, escolha, acertou){
-  const certa = q.opcoes.find(o=>o.correta).texto;
   const area = $("#area-feedback");
+  const certa = q.tipo==="num" ? q.r : q.opcoes.find(o=>o.correta).texto;
+  const sua   = q.tipo==="num" ? escolha : q.opcoes[escolha].texto;
+  const motivo = q.tipo==="num" ? null : q.opcoes[escolha].motivo;
   if(acertou){
     area.innerHTML = `<div class="feedback ok"><h4>Isso aí! ✅</h4><p>${q.exp}</p></div>`;
   } else {
-    const motivo = q.opcoes[escolha].motivo;
     area.innerHTML = `<div class="feedback nok"><h4>Ainda não 🔎</h4>
-      <p>Você marcou <strong>“${q.opcoes[escolha].texto}”</strong>. ${motivo||"Essa alternativa não é o que o livro diz."}</p>
+      <p>Você respondeu <strong>“${sua}”</strong>. ${motivo||""}</p>
       <p>A resposta certa é <strong>“${certa}”</strong>.</p><p>${q.exp}</p></div>`;
   }
 }
 
 function avancar(){
   if(estado.modo==="teste"){
-    const q = estado.lista[estado.indice], i = estado.escolhaAtual;
-    const acertou = q.opcoes[i].correta;
-    estado.respostas.push({q, escolha:i, acertou});
+    const q = estado.lista[estado.indice];
+    let escolha, acertou;
+    if(q.tipo==="num"){
+      escolha = $("#resp-num").value.trim();
+      acertou = acertoNum(q, escolha);
+    } else {
+      escolha = estado.escolhaAtual;
+      acertou = q.opcoes[escolha].correta;
+    }
+    estado.respostas.push({q, escolha, acertou});
     plantarColonia(acertou, estado.respostas.length-1);
     estado.escolhaAtual = undefined;
   }
@@ -876,8 +944,10 @@ async function finalizar(){
   if(paraRever.length){
     revisao = `<div class="revisao"><h3>${estado.modo==="teste"?"Gabarito comentado":"O que revisar"}</h3>`;
     paraRever.forEach(r=>{
-      const certa = r.q.opcoes.find(o=>o.correta).texto;
-      const sua = r.q.opcoes[r.escolha].texto, motivo = r.q.opcoes[r.escolha].motivo;
+      const ehNum = r.q.tipo==="num";
+      const certa = ehNum ? r.q.r : r.q.opcoes.find(o=>o.correta).texto;
+      const sua = ehNum ? (r.escolha||"(em branco)") : r.q.opcoes[r.escolha].texto;
+      const motivo = ehNum ? null : r.q.opcoes[r.escolha].motivo;
       revisao += `<div class="item-revisao ${r.acertou?"ok":""}">
         <p class="q">${r.acertou?"✅":"❌"} ${r.q.p}</p>
         ${r.acertou?`<p class="certa">Você respondeu: ${sua}</p>`
