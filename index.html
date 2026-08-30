@@ -215,18 +215,18 @@ const QUIZ = {
   registrar(q){ this.catalogo.push(q); }
 };
 </script>
-<script src="dados/controle.js"></script>
-<script src="dados/4ano-ciencias-3bim.js"></script>
-<script src="dados/4ano-matematica-3bim.js"></script>
-<script src="dados/4ano-portugues-3bim.js"></script>
-<script src="dados/4ano-historia-3bim.js"></script>
-<script src="dados/4ano-geografia-3bim.js"></script>
-<script src="dados/4ano-ingles-3bim.js"></script>
-<script src="dados/8ano-matematica-3bim.js"></script>
-<script src="dados/8ano-ciencias-3bim.js"></script>
-<script src="dados/8ano-portugues-3bim.js"></script>
-<script src="dados/8ano-historia-3bim.js"></script>
-<script src="dados/8ano-geografia-3bim.js"></script>
+<script src="dados/controle.js?v=3"></script>
+<script src="dados/4ano-ciencias-3bim.js?v=3"></script>
+<script src="dados/4ano-matematica-3bim.js?v=3"></script>
+<script src="dados/4ano-portugues-3bim.js?v=3"></script>
+<script src="dados/4ano-historia-3bim.js?v=3"></script>
+<script src="dados/4ano-geografia-3bim.js?v=3"></script>
+<script src="dados/4ano-ingles-3bim.js?v=3"></script>
+<script src="dados/8ano-matematica-3bim.js?v=3"></script>
+<script src="dados/8ano-ciencias-3bim.js?v=3"></script>
+<script src="dados/8ano-portugues-3bim.js?v=3"></script>
+<script src="dados/8ano-historia-3bim.js?v=3"></script>
+<script src="dados/8ano-geografia-3bim.js?v=3"></script>
 
 <script>
 /* =========================== MOTOR ===========================
@@ -787,7 +787,7 @@ function desenharQuestao(){
     area.innerHTML = `<div class="resposta-num"><input id="resp-num" inputmode="decimal" autocomplete="off" placeholder="Digite a resposta"></div>
       <p class="dica">Pode usar vírgula ou ponto nos decimais.</p>`;
     const campo = $("#resp-num");
-    if(estado.modo === "aquecimento"){
+    if(estado.modo !== "teste"){
       $("#acoes").innerHTML = `<button class="btn" id="btn-conferir">Conferir</button>`;
       const conferir = ()=>{ if(campo.value.trim()) responderNum(campo.value.trim()); };
       $("#btn-conferir").addEventListener("click", conferir);
