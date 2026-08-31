@@ -263,7 +263,7 @@ const NUVEM = {
 };
 const ADMIN = { nome: "Luiza" };
 const SEM_REDE = "Não consegui falar com o servidor. Confira a internet e tente de novo.";
-function msgRede(e){ return e && e.status ? SEM_REDE+" (código "+e.status+")" : SEM_REDE; }
+function msgRede(e){ if(!e || !e.status) return SEM_REDE; return SEM_REDE+" (código "+e.status+(e.detalhe?" — "+String(e.detalhe).slice(0,160):"")+")"; }
 
 async function rpc(fn, args){
   const cab = { "Content-Type":"application/json", "apikey":NUVEM.chave };
@@ -273,9 +273,12 @@ async function rpc(fn, args){
     method: "POST", headers: cab, body: JSON.stringify(args || {})
   });
   if(!r.ok){
-    let detalhe = ""; try{ detalhe = JSON.stringify(await r.json()).slice(0,200); }catch(e){}
-    console.error("rpc", fn, r.status, detalhe);
-    const e = new Error("rpc "+fn+" http "+r.status); e.status = r.status; throw e;
+    let corpo = null; try{ corpo = await r.json(); }catch(e){}
+    console.error("rpc", fn, r.status, corpo);
+    const e = new Error("rpc "+fn+" http "+r.status);
+    e.status = r.status;
+    e.detalhe = corpo ? (corpo.message || corpo.hint || corpo.error_description || "") : "";
+    throw e;
   }
   return await r.json();
 }
