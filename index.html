@@ -263,14 +263,20 @@ const NUVEM = {
 };
 const ADMIN = { nome: "Luiza" };
 const SEM_REDE = "Não consegui falar com o servidor. Confira a internet e tente de novo.";
+function msgRede(e){ return e && e.status ? SEM_REDE+" (código "+e.status+")" : SEM_REDE; }
 
 async function rpc(fn, args){
+  const cab = { "Content-Type":"application/json", "apikey":NUVEM.chave };
+  // chaves antigas (JWT, começam com eyJ) também vão no Authorization; as novas (sb_...) não
+  if(NUVEM.chave.startsWith("eyJ")) cab["Authorization"] = "Bearer " + NUVEM.chave;
   const r = await fetch(NUVEM.url + "/rest/v1/rpc/" + fn, {
-    method: "POST",
-    headers: { "Content-Type":"application/json", "apikey":NUVEM.chave, "Authorization":"Bearer "+NUVEM.chave },
-    body: JSON.stringify(args || {})
+    method: "POST", headers: cab, body: JSON.stringify(args || {})
   });
-  if(!r.ok) throw new Error("rpc "+fn+" http "+r.status);
+  if(!r.ok){
+    let detalhe = ""; try{ detalhe = JSON.stringify(await r.json()).slice(0,200); }catch(e){}
+    console.error("rpc", fn, r.status, detalhe);
+    const e = new Error("rpc "+fn+" http "+r.status); e.status = r.status; throw e;
+  }
   return await r.json();
 }
 
@@ -474,7 +480,7 @@ async function criarPerfil(){
   const btn = $("#btn-criar"); btn.disabled = true; btn.textContent = "Criando...";
   let r;
   try{ r = await rpc("cadastrar", {p_nome:nome, p_ano:ano, p_avatar:avatar, p_senha:senha}); }
-  catch(e){ btn.disabled=false; btn.textContent="Criar perfil"; return falha(erro, SEM_REDE); }
+  catch(e){ btn.disabled=false; btn.textContent="Criar perfil"; return falha(erro, msgRede(e)); }
   btn.disabled=false; btn.textContent="Criar perfil";
   if(r.erro === "existe") return falha(erro,"Já existe uma conta com esse nome e ano. Se é você, toque nela para entrar; se esqueceu a senha, peça à "+ADMIN.nome+" para redefinir.");
   if(r.erro) return falha(erro,"Não deu para criar o perfil. Confira o nome e a senha.");
@@ -521,7 +527,7 @@ async function entrarNuvem(chave, senha, elErro, btn){
   const c = cache.contas[chave];
   let r;
   try{ r = await rpc("entrar", {p_nome:c.nome, p_ano:c.ano, p_senha:senha}); }
-  catch(e){ solta(); return falha(elErro, SEM_REDE); }
+  catch(e){ solta(); return falha(elErro, msgRede(e)); }
   solta();
   if(r.erro === "senha")     return falha(elErro,"Senha errada. Tenta de novo.");
   if(r.erro === "pendente"){ c.pendente = true; Armazem.gravar(CHAVE, cache); return falha(elErro,"Ainda aguardando: a "+ADMIN.nome+" ainda não aprovou seu acesso."); }
@@ -598,7 +604,7 @@ function telaAdmin(){
     const btn = $("#btn-abrir"); btn.disabled=true; btn.textContent="Abrindo...";
     let r;
     try{ r = await rpc("admin_listar", {p_senha:senha}); }
-    catch(e){ btn.disabled=false; btn.textContent="Abrir painel"; return falha($("#erro-admin"), SEM_REDE); }
+    catch(e){ btn.disabled=false; btn.textContent="Abrir painel"; return falha($("#erro-admin"), msgRede(e)); }
     btn.disabled=false; btn.textContent="Abrir painel";
     if(r && r.erro) return falha($("#erro-admin"),"Senha do painel errada.");
     painelAdmin(senha, r || []);
