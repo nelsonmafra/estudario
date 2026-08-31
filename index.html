@@ -177,6 +177,8 @@ input:focus{outline:none;border-color:var(--uva)}
 .tag-bloq{font-size:12px;font-weight:700;color:var(--coral)}
 .tag-pend{font-size:12px;font-weight:700;color:var(--tinta-fraca)}
 .apagar.aprovar{border-color:var(--verde-ok);color:var(--verde-ok)}
+.btn.secundario{background:var(--papel);color:var(--tinta);border:2px solid rgba(18,52,59,.2);box-shadow:none}
+.painel-linha.eu{background:var(--uva-clara);border-radius:12px;padding:8px}
 .resumo ul{margin:12px 0 0;padding-left:20px}
 .resumo li{margin-bottom:9px;font-size:15px}
 .resumo li::marker{color:var(--uva)}
@@ -217,7 +219,6 @@ const QUIZ = {
   registrar(q){ this.catalogo.push(q); }
 };
 </script>
-<script src="dados/controle.js"></script>
 <script src="dados/4ano-ciencias-3bim.js"></script>
 <script src="dados/4ano-matematica-3bim.js"></script>
 <script src="dados/4ano-portugues-3bim.js"></script>
@@ -251,29 +252,31 @@ const APP = {
   ]
 };
 
-/* --- Administração e convites ---------------------------------------
-   ADMIN.nome  → quem aprova os acessos (aparece nas telas)
-   ADMIN.senha → senha do painel de convites. TROQUE antes de publicar.
-   SEGREDO     → tempero dos códigos de convite. Se trocar, os códigos
-                 já distribuídos param de valer.                        */
-const ADMIN = { nome:"Luiza", senha:"mafra-2026" };
-const SEGREDO = "estudario-vX7q2";
+/* --- Nuvem (fase 2) -------------------------------------------------
+   O Estudário agora vive num banco de dados (Supabase). Cadastro, login,
+   aprovação, bloqueio e progresso são centralizados: a Luiza administra
+   tudo pelo painel, de qualquer aparelho — e a senha dela mora no banco,
+   não neste arquivo. */
+const NUVEM = {
+  url: "https://opzhkmdpmutayaivzyck.supabase.co",
+  chave: "sb_publishable_NnmY2Ox-E1zp6Tvx-RvJpg_UBKgYKVL"
+};
+const ADMIN = { nome: "Luiza" };
+const SEM_REDE = "Não consegui falar com o servidor. Confira a internet e tente de novo.";
+
+async function rpc(fn, args){
+  const r = await fetch(NUVEM.url + "/rest/v1/rpc/" + fn, {
+    method: "POST",
+    headers: { "Content-Type":"application/json", "apikey":NUVEM.chave, "Authorization":"Bearer "+NUVEM.chave },
+    body: JSON.stringify(args || {})
+  });
+  if(!r.ok) throw new Error("rpc "+fn+" http "+r.status);
+  return await r.json();
+}
 
 function hash32(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h>>>0; }
 function normalizarNome(n){ return n.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g," "); }
-function codigoConvite(nome, ano){
-  const h1 = hash32(normalizarNome(nome)+"|"+ano+"|"+SEGREDO);
-  const h2 = hash32(SEGREDO+"|"+ano+"|"+normalizarNome(nome));
-  const alf = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
-  let x=h1, y=h2, out="";
-  for(let i=0;i<5;i++){ out += alf[((x^y)>>>0)%alf.length]; x=Math.floor(x/7)+1; y=Math.floor(y/5)+1; }
-  return out;
-}
 function qid(q){ return "q"+hash32(q.p); }
-function bloqueadoGlobal(nome, ano){
-  const lista = (QUIZ.controle && QUIZ.controle.bloqueios) || [];
-  return lista.includes(normalizarNome(nome)+"|"+ano);
-}
 
 const CONQUISTAS = [
   {id:"primeira", emoji:"🧪", nome:"Primeira rodada",  dica:"Terminar uma rodada",              teste:d=>d.partidas>=1},
@@ -296,23 +299,24 @@ const LETRAS=["A","B","C","D","E"];
 const POSICOES=[[30,26],[62,22],[46,44],[22,58],[70,52],[38,72],[64,74],[52,14],[18,38],[80,36],
                 [34,88],[76,64],[14,72],[50,60],[86,50],[26,44],[58,88],[40,34],[70,88],[12,52]];
 
-/* ---------- armazenamento ---------- */
-const CHAVE = "estudario:v1";
+/* ---------- cache do aparelho + sessão ---------- */
+const CHAVE = "estudario:v2";      // contas lembradas neste aparelho
+const CHAVE_V1 = "estudario:v1";   // dados da fase 1, importados no 1º login
 const Armazem = {
-  async ler(){
-    try{ if(window.storage){ const r = await window.storage.get(CHAVE); if(r&&r.value) return JSON.parse(r.value); } }catch(e){}
-    try{ const v = localStorage.getItem(CHAVE); if(v) return JSON.parse(v); }catch(e){}
+  async ler(ch){
+    try{ if(window.storage){ const r = await window.storage.get(ch); if(r&&r.value) return JSON.parse(r.value); } }catch(e){}
+    try{ const v = localStorage.getItem(ch); if(v) return JSON.parse(v); }catch(e){}
     return null;
   },
-  async gravar(d){
-    try{ if(window.storage){ await window.storage.set(CHAVE, JSON.stringify(d)); return true; } }catch(e){}
-    try{ localStorage.setItem(CHAVE, JSON.stringify(d)); return true; }catch(e){}
+  async gravar(ch, d){
+    try{ if(window.storage){ await window.storage.set(ch, JSON.stringify(d)); return true; } }catch(e){}
+    try{ localStorage.setItem(ch, JSON.stringify(d)); return true; }catch(e){}
     return false;
   }
 };
 
-let banco = { perfis:{} };
-let perfil = null;      // perfil logado
+let cache = { contas:{} };   // contas conhecidas por este aparelho
+let perfil = null;           // sessão ativa {id, nome, ano, avatar, senha, dados}
 let salvaOk = true;
 let filtroAno = null, filtroBim = "todos", quizAtual = null;
 
@@ -327,11 +331,20 @@ function contarMedalhas(d, tipo){
   Object.values(d.porQuiz).forEach(q=>Object.values(q.medalhas||{}).forEach(m=>{ if(m===tipo) n++; }));
   return n;
 }
-function embaralharSenha(txt){ // ofuscação simples: separa perfis, não é segurança de verdade
-  let h=5381; for(let i=0;i<txt.length;i++) h=((h*33)^txt.charCodeAt(i))>>>0;
-  return "h"+h.toString(36);
+function chaveDe(nome, ano){ return normalizarNome(nome)+"|"+ano; }
+
+async function salvar(){
+  if(!perfil) return;
+  cache.contas[chaveDe(perfil.nome, perfil.ano)] = {
+    id:perfil.id, nome:perfil.nome, ano:perfil.ano, avatar:perfil.avatar,
+    senha:perfil.senha, dados:perfil.dados
+  };
+  await Armazem.gravar(CHAVE, cache);
+  try{
+    const r = await rpc("salvar_progresso", {p_id:perfil.id, p_senha:perfil.senha, p_dados:perfil.dados});
+    salvaOk = !!(r && r.ok);
+  }catch(e){ salvaOk = false; }
 }
-async function salvar(){ salvaOk = await Armazem.gravar(banco); }
 
 function nivelDe(xp){
   let i=0; for(let k=0;k<APP.niveis.length;k++) if(xp>=APP.niveis[k].xp) i=k;
@@ -383,27 +396,27 @@ function telaEntrada(){
   perfil = null;
   limparPlaca();
   cabecalho(APP.nome, "Quem vai estudar hoje?");
-  const nomes = Object.keys(banco.perfis);
+  const chaves = Object.keys(cache.contas);
   let html = "";
 
-  if(nomes.length){
+  if(chaves.length){
     html += `<div class="cartao" style="background:transparent;border:none;box-shadow:none;padding:0"><h3 style="margin-bottom:10px">Quem vai estudar hoje?</h3><div class="lista-perfis">`;
-    nomes.forEach(k=>{
-      const p = banco.perfis[k];
-      const nv = nivelDe(p.dados.xp);
+    chaves.forEach(k=>{
+      const c = cache.contas[k];
+      const nv = nivelDe((c.dados||dadosZero()).xp||0);
       html += `<button class="linha-perfil" data-perfil="${k}">
-        <span class="av">${p.avatar}</span>
-        <span><b>${p.nome}</b><small>${p.ano} · Nível ${nv.numero} · ${p.dados.xp} XP${(p.bloqueado||bloqueadoGlobal(p.nome,p.ano))?' · ⛔ bloqueado':(p.pendente?' · ⏳ aguardando aprovação':'')}</small></span>
+        <span class="av">${c.avatar}</span>
+        <span><b>${c.nome}</b><small>${c.ano} · Nível ${nv.numero} · ${(c.dados&&c.dados.xp)||0} XP${c.pendente?' · ⏳ aguardando aprovação':''}</small></span>
         <span class="entrar">Entrar ›</span>
       </button>`;
     });
     html += `</div></div><div class="divisor"><span>ou</span></div>`;
   } else {
-    html += `<div class="cartao intro"><p>Bem-vinda ao <strong>${APP.nome}</strong>! Crie seu perfil com o código de convite e comece a treinar. Tudo o que você fizer fica guardado.</p></div>`;
+    html += `<div class="cartao intro"><p>Bem-vinda ao <strong>${APP.nome}</strong>! Crie seu perfil e comece a treinar. Sua pontuação fica guardada e te acompanha em qualquer aparelho.</p></div>`;
   }
 
   html += `<div class="cartao">
-      <h3>${nomes.length?"Ou crie um perfil novo":"Criar meu perfil"}</h3>
+      <h3>${chaves.length?"Ou crie um perfil novo":"Criar meu perfil"}</h3>
       <label for="n-nome">Seu nome</label>
       <input id="n-nome" maxlength="18" placeholder="Ex.: Carol" autocomplete="off">
       <label>Escolha seu bichinho</label>
@@ -412,15 +425,14 @@ function telaEntrada(){
       <div class="chips" id="n-anos">${anosDisponiveis().map((a,i)=>`<button class="chip" data-ano="${a}" aria-pressed="${i===0}">${a}</button>`).join("")}</div>
       <label for="n-senha">Senha de 4 números</label>
       <input id="n-senha" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
-      <p class="dica">Serve só para separar o seu perfil dos outros. Não use uma senha de verdade.</p>
-      <p class="dica">Depois de criar o perfil, a ${ADMIN.nome} aprova o seu acesso.</p>
+      <p class="dica">Depois de criar o perfil, a ${ADMIN.nome} aprova o seu acesso — sem códigos: ela toca em aprovar e pronto.</p>
       <div class="acoes"><button class="btn" id="btn-criar">Criar perfil</button></div>
       <p class="erro-form" id="erro-criar" hidden></p>
     </div>
     <button class="cartao item admin-card" id="btn-admin">
       <span class="icone">🔑</span>
-      <span><h3>Painel de convites</h3>
-      <p class="desc">Área da ${ADMIN.nome}: gerar os códigos e liberar o acesso das amigas.</p></span>
+      <span><h3>Painel da ${ADMIN.nome}</h3>
+      <p class="desc">Aprovar, bloquear e acompanhar todas as usuárias — de qualquer aparelho.</p></span>
     </button>`;
 
   telas.entrada.innerHTML = html;
@@ -448,63 +460,102 @@ function anosDisponiveis(){
   QUIZ.catalogo.forEach(q=>anos.add(q.ano));
   return [...anos].sort();
 }
+function falha(el,msg){ el.textContent = msg; el.hidden = false; }
+
+/* ---------- cadastro ---------- */
 async function criarPerfil(){
   const nome = $("#n-nome").value.trim();
   const senha = $("#n-senha").value.trim();
   const erro = $("#erro-criar");
-  const chave = nome.toLowerCase();
   const ano = selecionado("#n-anos","ano")||anosDisponiveis()[0];
+  const avatar = selecionado("#n-avatares","av")||"🦊";
   if(nome.length < 2) return falha(erro,"Escreva seu nome.");
-  if(bloqueadoGlobal(nome, ano)) return falha(erro,"Esse acesso está bloqueado. Fale com a "+ADMIN.nome+".");
-  if(banco.perfis[chave]) return falha(erro,"Já existe um perfil com esse nome. Escolha outro ou entre nele.");
   if(!/^\d{4}$/.test(senha)) return falha(erro,"A senha precisa ter 4 números.");
-  banco.perfis[chave] = {
-    nome, avatar:selecionado("#n-avatares","av")||"🦊",
-    ano, senha:embaralharSenha(senha), pendente:true, dados:dadosZero()
-  };
-  await salvar();
-  perfil = banco.perfis[chave];
-  telaAprovacao(chave);
+  const btn = $("#btn-criar"); btn.disabled = true; btn.textContent = "Criando...";
+  let r;
+  try{ r = await rpc("cadastrar", {p_nome:nome, p_ano:ano, p_avatar:avatar, p_senha:senha}); }
+  catch(e){ btn.disabled=false; btn.textContent="Criar perfil"; return falha(erro, SEM_REDE); }
+  btn.disabled=false; btn.textContent="Criar perfil";
+  if(r.erro === "existe") return falha(erro,"Já existe uma conta com esse nome e ano. Se é você, toque nela para entrar; se esqueceu a senha, peça à "+ADMIN.nome+" para redefinir.");
+  if(r.erro) return falha(erro,"Não deu para criar o perfil. Confira o nome e a senha.");
+  const k = chaveDe(nome, ano);
+  cache.contas[k] = {id:r.id, nome, ano, avatar, senha, dados:dadosZero(), pendente:true};
+  await Armazem.gravar(CHAVE, cache);
+  telaPendente(k);
 }
-function falha(el,msg){ el.textContent = msg; el.hidden = false; }
 
-function telaAprovacao(chave){
-  const p = banco.perfis[chave];
-  cabecalho("Quase lá, "+p.nome+"!", "Falta a aprovação da "+ADMIN.nome);
+/* ---------- aguardando aprovação ---------- */
+function telaPendente(chave, aviso){
+  const c = cache.contas[chave];
+  cabecalho("Quase lá, "+c.nome+"!", "Falta a aprovação da "+ADMIN.nome);
   telas.entrada.innerHTML = `
     <button class="voltar" id="btn-volta-entrada">← Voltar</button>
     <div class="cartao intro" style="margin-top:10px">
       <p><strong>Seu perfil foi criado</strong> e está aguardando aprovação. ⏳</p>
-      <p style="margin-top:8px">Mande uma mensagem para a <b>${ADMIN.nome}</b> dizendo seu <b>nome (${p.nome})</b> e seu <b>ano (${p.ano})</b>. Ela vai aprovar seu acesso e te enviar o <b>código de liberação</b>.</p>
+      <p style="margin-top:8px">Avise a <b>${ADMIN.nome}</b> que você se cadastrou: <b>${c.nome} (${c.ano})</b>. Ela aprova no painel dela — do celular mesmo — e aí é só tocar no botão abaixo.</p>
     </div>
     <div class="cartao">
-      <label for="l-codigo">Código de liberação</label>
-      <input id="l-codigo" maxlength="12" placeholder="Ex.: K7M2P" autocomplete="off" style="text-transform:uppercase">
-      <div class="acoes"><button class="btn" id="btn-liberar">Liberar meu acesso</button></div>
-      <p class="erro-form" id="erro-liberar" hidden></p>
+      <div class="acoes"><button class="btn" id="btn-tentar">Já fui aprovada — entrar</button></div>
+      <p class="erro-form" id="erro-pendente" ${aviso?"":"hidden"}>${aviso||""}</p>
     </div>`;
   mostrar("entrada");
   $("#btn-volta-entrada").addEventListener("click", telaEntrada);
-  $("#btn-liberar").addEventListener("click", async ()=>{
-    const cod = $("#l-codigo").value.trim().toUpperCase();
-    if(bloqueadoGlobal(p.nome, p.ano)) return falha($("#erro-liberar"),"Esse acesso está bloqueado. Fale com a "+ADMIN.nome+".");
-    const ok = cod === codigoConvite(p.nome, p.ano) || cod === ADMIN.senha.toUpperCase();
-    if(!ok) return falha($("#erro-liberar"),`Código inválido para ${p.nome} (${p.ano}). Confira com a ${ADMIN.nome} se ela digitou seu nome exatamente assim.`);
-    delete p.pendente;
-    await salvar();
-    perfil = p;
-    filtroAno = p.ano;
-    telaEstante();
-  });
+  $("#btn-tentar").addEventListener("click", ()=>entrarNuvem(chave, cache.contas[chave].senha, $("#erro-pendente"), $("#btn-tentar")));
+}
+
+/* ---------- login ---------- */
+function importarLegadoV1(nome, ano){
+  try{
+    const bruto = localStorage.getItem(CHAVE_V1);
+    if(!bruto) return null;
+    const v1 = JSON.parse(bruto);
+    if(!v1 || !v1.perfis) return null;
+    const alvo = Object.values(v1.perfis).find(p => normalizarNome(p.nome)===normalizarNome(nome) && p.ano===ano);
+    return alvo ? alvo.dados : null;
+  }catch(e){ return null; }
+}
+
+async function entrarNuvem(chave, senha, elErro, btn){
+  if(btn){ btn.disabled = true; btn.dataset.rotulo = btn.textContent; btn.textContent = "Entrando..."; }
+  const solta = ()=>{ if(btn){ btn.disabled=false; btn.textContent = btn.dataset.rotulo; } };
+  const c = cache.contas[chave];
+  let r;
+  try{ r = await rpc("entrar", {p_nome:c.nome, p_ano:c.ano, p_senha:senha}); }
+  catch(e){ solta(); return falha(elErro, SEM_REDE); }
+  solta();
+  if(r.erro === "senha")     return falha(elErro,"Senha errada. Tenta de novo.");
+  if(r.erro === "pendente"){ c.pendente = true; Armazem.gravar(CHAVE, cache); return falha(elErro,"Ainda aguardando: a "+ADMIN.nome+" ainda não aprovou seu acesso."); }
+  if(r.erro === "bloqueada") return falha(elErro,"Seu acesso está bloqueado. Fale com a "+ADMIN.nome+".");
+  if(r.erro === "nao_existe"){
+    delete cache.contas[chave]; Armazem.gravar(CHAVE, cache);
+    return falha(elErro,"Essa conta não existe mais no servidor. Crie um perfil novo.");
+  }
+  if(r.erro) return falha(elErro, SEM_REDE);
+
+  // dados: servidor é a fonte; se ele estiver zerado, importa o que houver no aparelho (fase 1 ou cache)
+  let dados = Object.assign(dadosZero(), r.dados || {});
+  if(!dados.xp){
+    const doCache = c.dados && c.dados.xp ? c.dados : null;
+    const doV1 = importarLegadoV1(c.nome, c.ano);
+    const local = (doCache && (!doV1 || doCache.xp >= (doV1.xp||0))) ? doCache : doV1;
+    if(local && local.xp) dados = Object.assign(dadosZero(), local);
+  }
+  perfil = {id:r.id, nome:r.nome, ano:r.ano, avatar:r.avatar || c.avatar, senha, dados};
+  migrarPerfil(perfil);
+  delete c.pendente;
+  c.senha = senha; c.avatar = perfil.avatar;
+  await salvar();               // grava cache + empurra para a nuvem
+  filtroAno = perfil.ano;
+  telaEstante();
 }
 
 function pedirSenha(chave){
-  const p = banco.perfis[chave];
-  cabecalho(p.nome, "Digite sua senha para entrar");
+  const c = cache.contas[chave];
+  cabecalho(c.nome, "Digite sua senha para entrar");
   telas.entrada.innerHTML = `
     <div class="cartao">
       <button class="voltar" id="btn-volta-entrada">← Trocar de perfil</button>
-      <h3 style="margin:10px 0 0">${p.avatar} Oi, ${p.nome}!</h3>
+      <h3 style="margin:10px 0 0">${c.avatar} Oi, ${c.nome}!</h3>
       <label for="s-senha">Senha de 4 números</label>
       <input id="s-senha" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
       <div class="acoes"><button class="btn" id="btn-entrar">Entrar</button></div>
@@ -513,42 +564,44 @@ function pedirSenha(chave){
     </div>`;
   const campo = $("#s-senha");
   campo.focus();
-  const tentar = async ()=>{
-    if(p.bloqueado || bloqueadoGlobal(p.nome, p.ano)) return falha($("#erro-senha"), "O acesso de "+p.nome+" está bloqueado. Fale com a "+ADMIN.nome+".");
-    if(embaralharSenha(campo.value.trim()) !== p.senha) return falha($("#erro-senha"),"Senha errada. Tenta de novo.");
-    perfil = p; if(p.pendente){ perfil = p; return telaAprovacao(chave); }
-    filtroAno = p.ano; telaEstante();
-  };
+  const tentar = ()=>entrarNuvem(chave, campo.value.trim(), $("#erro-senha"), $("#btn-entrar"));
   $("#btn-entrar").addEventListener("click", tentar);
   campo.addEventListener("keydown", e=>{ if(e.key==="Enter") tentar(); });
   $("#btn-volta-entrada").addEventListener("click", telaEntrada);
   $("#btn-esqueci").addEventListener("click", e=>{
     if(e.target.dataset.c !== "sim"){
       e.target.dataset.c = "sim";
-      e.target.textContent = "Peça ajuda ao seu pai. Ou toque aqui de novo para APAGAR este perfil e começar do zero.";
+      e.target.textContent = "A "+ADMIN.nome+" redefine sua senha no painel dela. Ou toque aqui de novo para tirar este perfil da lista DESTE aparelho (a conta continua existindo).";
       return;
     }
-    delete banco.perfis[chave]; salvar().then(telaEntrada);
+    delete cache.contas[chave];
+    Armazem.gravar(CHAVE, cache).then(telaEntrada);
   });
   mostrar("entrada");
 }
 
-/* ================= Painel de convites (área da administradora) ================= */
+/* ================= Painel da administradora ================= */
 function telaAdmin(){
-  cabecalho("Painel de convites", "Área da "+ADMIN.nome);
+  cabecalho("Painel da "+ADMIN.nome, "Gestão de usuárias");
   telas.entrada.innerHTML = `
     <div class="cartao">
       <button class="voltar" id="btn-volta-entrada">← Voltar</button>
-      <h3 style="margin:10px 0 0">🔑 Painel de convites</h3>
+      <h3 style="margin:10px 0 0">🔑 Painel da ${ADMIN.nome}</h3>
       <label for="a-senha">Senha do painel</label>
       <input id="a-senha" type="password" autocomplete="off">
       <div class="acoes"><button class="btn" id="btn-abrir">Abrir painel</button></div>
       <p class="erro-form" id="erro-admin" hidden></p>
     </div>`;
   mostrar("entrada");
-  const tentar = ()=>{
-    if($("#a-senha").value !== ADMIN.senha) return falha($("#erro-admin"),"Senha do painel errada.");
-    painelAdmin();
+  const tentar = async ()=>{
+    const senha = $("#a-senha").value;
+    const btn = $("#btn-abrir"); btn.disabled=true; btn.textContent="Abrindo...";
+    let r;
+    try{ r = await rpc("admin_listar", {p_senha:senha}); }
+    catch(e){ btn.disabled=false; btn.textContent="Abrir painel"; return falha($("#erro-admin"), SEM_REDE); }
+    btn.disabled=false; btn.textContent="Abrir painel";
+    if(r && r.erro) return falha($("#erro-admin"),"Senha do painel errada.");
+    painelAdmin(senha, r || []);
   };
   $("#btn-abrir").addEventListener("click", tentar);
   $("#a-senha").addEventListener("keydown", e=>{ if(e.key==="Enter") tentar(); });
@@ -556,76 +609,81 @@ function telaAdmin(){
   $("#btn-volta-entrada").addEventListener("click", telaEntrada);
 }
 
-function painelAdmin(resultado){
-  cabecalho("Painel de convites", "Só a "+ADMIN.nome+" mexe aqui");
-  const nomes = Object.keys(banco.perfis);
-  let listaPerfis = nomes.length ? "" : `<p class="dica">Nenhum perfil criado neste aparelho ainda.</p>`;
-  nomes.forEach(k=>{
-    const p = banco.perfis[k];
-    const bloqLocal = !!p.bloqueado, bloqGlobal = bloqueadoGlobal(p.nome, p.ano);
-    const status = bloqGlobal ? `<span class="tag-bloq">⛔ bloqueada no site</span>`
-                 : bloqLocal ? `<span class="tag-bloq">⛔ bloqueada</span>`
-                 : p.pendente ? `<span class="tag-pend">⏳ pendente</span>`
+async function recarregarPainel(senha){
+  try{
+    const r = await rpc("admin_listar", {p_senha:senha});
+    if(r && !r.erro) return painelAdmin(senha, r);
+  }catch(e){}
+  telaAdmin();
+}
+
+function painelAdmin(senha, lista){
+  cabecalho("Painel da "+ADMIN.nome, "Todas as usuárias, de todos os aparelhos");
+  const pendentes = lista.filter(u=>u.status==="pendente");
+  const demais = lista.filter(u=>u.status!=="pendente");
+  const linha = u=>{
+    const status = u.status==="pendente" ? `<span class="tag-pend">⏳ pendente</span>`
+                 : u.status==="bloqueada" ? `<span class="tag-bloq">⛔ bloqueada</span>`
                  : `<span class="tag-ok">✔ ativa</span>`;
-    listaPerfis += `<div class="painel-linha">
-      <span>${p.avatar} <b>${p.nome}</b> ${status}<br>
-      <small>${p.ano} · ${p.dados.xp} XP · ${p.dados.partidas} partidas · ${p.dados.acertosTotais} acertos</small></span>
+    return `<div class="painel-linha">
+      <span>${u.avatar||"🦊"} <b>${u.nome}</b> ${status}<br>
+      <small>${u.ano} · ${u.xp||0} XP</small></span>
       <span class="painel-acoes">
-        ${p.pendente && !bloqGlobal ? `<button class="apagar aprovar" data-aprovar="${k}">aprovar</button>` : ""}
-        ${bloqGlobal ? "" : `<button class="apagar bloq" data-bloq="${k}">${bloqLocal?"desbloquear":"bloquear"}</button>`}
-        <button class="apagar" data-apagar="${k}">apagar</button>
+        ${u.status==="pendente" ? `<button class="apagar aprovar" data-acao="ativa" data-id="${u.id}">aprovar</button>` : ""}
+        ${u.status==="ativa" ? `<button class="apagar bloq" data-acao="bloqueada" data-id="${u.id}">bloquear</button>` : ""}
+        ${u.status==="bloqueada" ? `<button class="apagar aprovar" data-acao="ativa" data-id="${u.id}">desbloquear</button>` : ""}
+        <button class="apagar bloq" data-senha-de="${u.id}" data-nome="${u.nome}">senha</button>
+        <button class="apagar" data-apagar="${u.id}">apagar</button>
       </span>
     </div>`;
-  });
-
+  };
   telas.entrada.innerHTML = `
     <button class="voltar" id="btn-volta-entrada">← Sair do painel</button>
-
+    ${pendentes.length?`<div class="cartao" style="margin-top:10px"><h3>⏳ Aguardando aprovação (${pendentes.length})</h3>${pendentes.map(linha).join("")}</div>`:""}
     <div class="cartao" style="margin-top:10px">
-      <h3>Aprovar uma amiga</h3>
-      <p class="dica" style="margin-top:4px">A amiga primeiro cria o perfil no site (nome, ano e senha). Depois você gera aqui o <b>código de liberação</b> — ele vale para <b>esse nome e esse ano</b>, em qualquer aparelho. Digite o nome exatamente como ela cadastrou.</p>
-      <label for="c-nome">Nome da amiga</label>
-      <input id="c-nome" maxlength="18" placeholder="Ex.: Amanda" autocomplete="off">
-      <label>Ano dela</label>
-      <div class="chips" id="c-anos">${anosDisponiveis().map((a,i)=>`<button class="chip" data-ano="${a}" aria-pressed="${i===0}">${a}</button>`).join("")}</div>
-      <div class="acoes"><button class="btn" id="btn-gerar">Gerar código</button></div>
-      <p class="erro-form" id="erro-gerar" hidden></p>
-      ${resultado ? `
-        <div class="codigo-grande">${resultado.codigo}</div>
-        <div class="copiar-texto">Mensagem pronta para enviar: <br><b>“Aprovado! 🎉 Seu código de liberação do Estudário é ${resultado.codigo}. Entre no seu perfil (${resultado.nome}, ${resultado.ano}) e digite o código para liberar.”</b></div>` : ""}
-    </div>
-
-    <div class="cartao">
-      <h3>Gestão de usuárias — este aparelho</h3>
-      ${listaPerfis}
-      <p class="dica"><b>Aprovar</b> libera na hora um perfil pendente criado neste aparelho (para amigas em outros aparelhos, gere o código de liberação acima). <b>Bloquear</b> impede a pessoa de entrar no perfil neste aparelho (dá para desbloquear depois). <b>Apagar</b> remove o perfil e toda a pontuação.</p>
-      <p class="dica">Os perfis das amigas ficam nos aparelhos delas. Para <b>bloquear uma amiga em qualquer aparelho</b>, existe a lista de bloqueio do site: peça ao responsável, que solicita a atualização — no próximo acesso dela, o Estudário nega a entrada e o código dela deixa de valer.</p>
+      <h3>Usuárias (${demais.length})</h3>
+      ${demais.length?demais.map(linha).join(""):`<p class="dica">Ninguém ainda. Assim que alguém se cadastrar, aparece aqui.</p>`}
+      <p class="dica"><b>Aprovar</b> libera o acesso na hora, em qualquer aparelho. <b>Bloquear</b> impede a entrada em todos. <b>Senha</b> redefine a senha de quem esqueceu. <b>Apagar</b> remove a conta e a pontuação (pede confirmação).</p>
     </div>`;
   mostrar("entrada");
-
-  ligarGrupo("#c-anos","[data-ano]");
   $("#btn-volta-entrada").addEventListener("click", telaEntrada);
-  $("#btn-gerar").addEventListener("click", ()=>{
-    const nome = $("#c-nome").value.trim();
-    if(nome.length < 2) return falha($("#erro-gerar"),"Escreva o nome da amiga, igualzinho ao cadastro dela.");
-    const ano = selecionado("#c-anos","ano");
-    if(bloqueadoGlobal(nome, ano)) return falha($("#erro-gerar"),"Esse nome está na lista de bloqueio do site — o código não funcionaria.");
-    painelAdmin({nome, ano, codigo:codigoConvite(nome, ano)});
-  });
-  telas.entrada.querySelectorAll("[data-aprovar]").forEach(b=>b.addEventListener("click", async ()=>{
-    delete banco.perfis[b.dataset.aprovar].pendente;
-    await salvar(); painelAdmin();
+  telas.entrada.querySelectorAll("[data-acao]").forEach(b=>b.addEventListener("click", async ()=>{
+    b.disabled = true;
+    try{ await rpc("admin_definir_status", {p_senha:senha, p_id:b.dataset.id, p_status:b.dataset.acao}); }catch(e){}
+    recarregarPainel(senha);
   }));
-  telas.entrada.querySelectorAll("[data-bloq]").forEach(b=>b.addEventListener("click", async ()=>{
-    const p = banco.perfis[b.dataset.bloq];
-    p.bloqueado = !p.bloqueado;
-    await salvar(); painelAdmin();
+  telas.entrada.querySelectorAll("[data-senha-de]").forEach(b=>b.addEventListener("click", async ()=>{
+    const nova = (window.prompt("Nova senha de 4 números para "+b.dataset.nome+":")||"").trim();
+    if(!/^\d{4}$/.test(nova)) return;
+    try{ await rpc("admin_redefinir_senha", {p_senha:senha, p_id:b.dataset.senhaDe, p_nova:nova}); }catch(e){}
+    recarregarPainel(senha);
   }));
-  telas.entrada.querySelectorAll("[data-apagar]").forEach(b=>b.addEventListener("click", async e=>{
-    const k = b.dataset.apagar;
+  telas.entrada.querySelectorAll("[data-apagar]").forEach(b=>b.addEventListener("click", async ()=>{
     if(b.dataset.c !== "sim"){ b.dataset.c="sim"; b.textContent="apagar mesmo?"; return; }
-    delete banco.perfis[k]; await salvar(); painelAdmin();
+    b.disabled = true;
+    try{ await rpc("admin_apagar", {p_senha:senha, p_id:b.dataset.apagar}); }catch(e){}
+    recarregarPainel(senha);
   }));
+}
+
+/* ================= Ranking ================= */
+async function telaRanking(){
+  limparPlaca();
+  cabecalho("🏆 Ranking", "Quem está treinando mais?");
+  let lista = [];
+  try{ lista = await rpc("ranking") || []; }catch(e){ lista = null; }
+  let corpo;
+  if(lista === null) corpo = `<p class="dica">${SEM_REDE}</p>`;
+  else if(!lista.length) corpo = `<p class="dica">Ninguém pontuou ainda — seja a primeira!</p>`;
+  else corpo = lista.map((u,i)=>`<div class="painel-linha ${perfil && normalizarNome(u.nome)===normalizarNome(perfil.nome) && u.ano===perfil.ano ? "eu":""}">
+      <span><b>${i+1}º</b> ${u.avatar||"🦊"} <b>${u.nome}</b><br><small>${u.ano}</small></span>
+      <span class="xp-total">${u.xp} XP</span>
+    </div>`).join("");
+  telas.estante.innerHTML = `
+    <button class="voltar" id="btn-volta-estante">← Voltar</button>
+    <div class="cartao" style="margin-top:10px">${corpo}</div>`;
+  mostrar("estante");
+  $("#btn-volta-estante").addEventListener("click", telaEstante);
 }
 
 /* ================= TELA 2: estante de matérias ================= */
@@ -662,7 +720,8 @@ function telaEstante(){
         <span><b>${d.melhorSequencia}</b>seguidas</span>
       </div>
       <div class="conquistas">${conqHtml}</div>
-      ${salvaOk?"":`<p class="aviso">Não consegui gravar neste aparelho — o progresso vale só até fechar a página.</p>`}
+      <div class="acoes" style="margin-top:10px"><button class="btn secundario" id="btn-ranking">🏆 Ranking das amigas</button></div>
+      ${salvaOk?"":`<p class="aviso">Sem conexão com o servidor — seu progresso está guardado neste aparelho e será enviado quando a internet voltar.</p>`}
     </div>
 
     <div class="divisor"><span>Bimestre</span></div>
@@ -693,6 +752,7 @@ function telaEstante(){
   telas.estante.querySelectorAll("#f-bim [data-bim]").forEach(b=>b.addEventListener("click",()=>{ filtroBim=b.dataset.bim; telaEstante(); }));
   telas.estante.querySelectorAll("[data-quiz]").forEach(b=>b.addEventListener("click",()=>telaMenu(b.dataset.quiz)));
   $("#btn-sair-perfil").addEventListener("click", telaEntrada);
+  $("#btn-ranking").addEventListener("click", telaRanking);
 }
 
 /* ================= TELA 3: menu do quiz ================= */
@@ -1063,12 +1123,8 @@ function migrarPerfil(p){
 
 /* ================= início ================= */
 (async function(){
-  const salvo = await Armazem.ler();
-  if(salvo && salvo.perfis) banco = salvo;
-  Object.values(banco.perfis).forEach(p=>{ p.dados = Object.assign(dadosZero(), p.dados); });
-  let migrou = false;
-  Object.values(banco.perfis).forEach(p=>{ if(migrarPerfil(p)) migrou = true; });
-  if(migrou) await salvar();
+  const salvo = await Armazem.ler(CHAVE);
+  if(salvo && salvo.contas) cache = salvo;
   telaEntrada();
 })();
 </script>
