@@ -424,7 +424,12 @@ function telaEntrada(){
     html += `<div class="cartao intro"><p>Bem-vinda ao <strong>${APP.nome}</strong>! Crie seu perfil e comece a treinar. Sua pontuação fica guardada e te acompanha em qualquer aparelho.</p></div>`;
   }
 
-  html += `<div class="cartao">
+  html += `<button class="cartao item" id="btn-login" style="margin-bottom:14px">
+      <span class="icone">👋</span>
+      <span><h3>Já tenho conta</h3>
+      <p class="desc">Entrar com meu nome e senha neste aparelho.</p></span>
+    </button>
+    <div class="cartao">
       <h3>${chaves.length?"Ou crie um perfil novo":"Criar meu perfil"}</h3>
       <label for="n-nome">Seu nome</label>
       <input id="n-nome" maxlength="18" placeholder="Ex.: Carol" autocomplete="off">
@@ -452,6 +457,7 @@ function telaEntrada(){
   ligarGrupo("#n-anos","[data-ano]");
   $("#btn-criar").addEventListener("click", criarPerfil);
   $("#btn-admin").addEventListener("click", telaAdmin);
+  $("#btn-login").addEventListener("click", telaLogin);
 }
 function ligarGrupo(sel, itens){
   const g = $(sel); if(!g) return;
@@ -471,6 +477,38 @@ function anosDisponiveis(){
 }
 function falha(el,msg){ el.textContent = msg; el.hidden = false; }
 
+/* ---------- entrar com conta existente (aparelho novo) ---------- */
+function telaLogin(){
+  cabecalho("Que bom te ver de novo!", "Entre com sua conta");
+  telas.entrada.innerHTML = `
+    <div class="cartao">
+      <button class="voltar" id="btn-volta-entrada">← Voltar</button>
+      <h3 style="margin:10px 0 0">👋 Entrar na minha conta</h3>
+      <label for="e-nome">Seu nome (igual ao cadastro)</label>
+      <input id="e-nome" maxlength="18" autocomplete="off">
+      <label>Seu ano</label>
+      <div class="chips" id="e-anos">${anosDisponiveis().map((a,i)=>`<button class="chip" data-ano="${a}" aria-pressed="${i===0}">${a}</button>`).join("")}</div>
+      <label for="e-senha">Senha de 4 números</label>
+      <input id="e-senha" type="password" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="off">
+      <div class="acoes"><button class="btn" id="btn-logar">Entrar</button></div>
+      <p class="erro-form" id="erro-logar" hidden></p>
+    </div>`;
+  mostrar("entrada");
+  ligarGrupo("#e-anos","[data-ano]");
+  $("#btn-volta-entrada").addEventListener("click", telaEntrada);
+  const tentar = ()=>{
+    const nome = $("#e-nome").value.trim();
+    const senha = $("#e-senha").value.trim();
+    const ano = selecionado("#e-anos","ano")||anosDisponiveis()[0];
+    if(nome.length < 2) return falha($("#erro-logar"),"Escreva seu nome.");
+    const k = chaveDe(nome, ano);
+    if(!cache.contas[k]) cache.contas[k] = {nome, ano, avatar:"🦊", dados:dadosZero()};
+    entrarNuvem(k, senha, $("#erro-logar"), $("#btn-logar"));
+  };
+  $("#btn-logar").addEventListener("click", tentar);
+  $("#e-senha").addEventListener("keydown", e=>{ if(e.key==="Enter") tentar(); });
+}
+
 /* ---------- cadastro ---------- */
 async function criarPerfil(){
   const nome = $("#n-nome").value.trim();
@@ -485,7 +523,7 @@ async function criarPerfil(){
   try{ r = await rpc("cadastrar", {p_nome:nome, p_ano:ano, p_avatar:avatar, p_senha:senha}); }
   catch(e){ btn.disabled=false; btn.textContent="Criar perfil"; return falha(erro, msgRede(e)); }
   btn.disabled=false; btn.textContent="Criar perfil";
-  if(r.erro === "existe") return falha(erro,"Já existe uma conta com esse nome e ano. Se é você, toque nela para entrar; se esqueceu a senha, peça à "+ADMIN.nome+" para redefinir.");
+  if(r.erro === "existe") return falha(erro,"Já existe uma conta com esse nome e ano. Se é você, use o botão “Já tenho conta” para entrar; se esqueceu a senha, peça à "+ADMIN.nome+" para redefinir.");
   if(r.erro) return falha(erro,"Não deu para criar o perfil. Confira o nome e a senha.");
   const k = chaveDe(nome, ano);
   cache.contas[k] = {id:r.id, nome, ano, avatar, senha, dados:dadosZero(), pendente:true};
